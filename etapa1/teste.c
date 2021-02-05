@@ -13,5 +13,9 @@ private public protected end default
 
 /* caracteres especiais
 çç
+comentario
+multi
+linha
+
 */
 , ; : ( ) [ ] { } + - |*/ < > = ! & % # ^ . $
