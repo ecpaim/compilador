@@ -15,6 +15,9 @@ exponent [eE][+-]?{integer}
 real {integer}("."{integer})?{exponent}?
 
 %%
+"\/\*"^["\*\/"] { }
+"//"([^\n]+)$ { }
+"/*"([^"*/"]+)$ { }
 
 \n { }
 {white} { }

@@ -10,3 +10,8 @@ int float bool char string if then else
 while do input output return const static
 foreach for switch case break continue class 
 private public protected end default
+
+/* caracteres especiais
+çç
+*/
+, ; : ( ) [ ] { } + - |*/ < > = ! & % # ^ . $
