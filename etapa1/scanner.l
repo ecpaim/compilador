@@ -13,6 +13,7 @@ digit [0-9]
 integer {digit}+
 exponent [eE][+-]?{integer}
 real (\+|-)?{integer}("."{integer})?{exponent}?
+notreal (\+|-)?{integer}(".")[0-9]*[a-zA-Z_]+[0-9]*{exponent}?
 
 %%
 "\/\*"^["\*\/"] { }
@@ -90,8 +91,12 @@ real (\+|-)?{integer}("."{integer})?{exponent}?
 
 
 [a-zA-Z_][a-zA-Z0-9_]* { return TK_IDENTIFICADOR; }
+[0-9]+[a-zA-Z_]+[a-zA-Z0-9_]* { return TOKEN_ERRO; }
+
 (\+|-)?[0-9]+ { return TK_LIT_INT; }
+
 {real} { return TK_LIT_FLOAT; }
+{notreal} { return TOKEN_ERRO; }
 
 '.{1}' { return TK_LIT_CHAR; }
 . { return TOKEN_ERRO; }

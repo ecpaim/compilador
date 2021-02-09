@@ -20,3 +20,14 @@ linha
 */
 , ; : ( ) [ ] { } + - |*/ < > = ! & % # ^ . $
 float dododo = -3.14;
+
+float 7eight;
+
+float var = 9898.a4;
+
+var2 = 11.4b4;
+
+var = 51.4b4e-12
+
+correct = 40.30E-12
+
