@@ -3,7 +3,7 @@
 #define YYERROR_VERBOSE 1
 extern int yylineno;
 int yylex(void);
-void yyerror (char const *s);
+int yyerror (char const *s);
 %}
 
 %token TK_PR_INT
@@ -64,7 +64,8 @@ tipo : TK_PR_BOOL | TK_PR_INT;
 
 %%
 
-void yyerror(const char *str)
+int yyerror(const char *str)
 {
     fprintf(stderr,"error: %s in line %d\n", str, yylineno);
+    return 1;
 }
