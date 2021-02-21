@@ -1,5 +1,7 @@
 %{
 #include<stdio.h>
+#define YYERROR_VERBOSE 1
+extern int yylineno;
 int yylex(void);
 void yyerror (char const *s);
 %}
@@ -51,11 +53,18 @@ void yyerror (char const *s);
 
 %%
 
-programa : '[' lista ']';
-lista : TK_LIT_STRING | TK_LIT_STRING ',' lista;
+// programa : funcoes;
+programa: variaveis;
+// programa: funcoes variaveis;
+programa: ;
+
+variaveis : tipo list_id;
+list_id : TK_IDENTIFICADOR | list_id',';
+tipo : TK_PR_BOOL | TK_PR_INT;
 
 %%
 
-void yyerror (char const *s) {
-    printf("%s\n", s);
+void yyerror(const char *str)
+{
+    fprintf(stderr,"error: %s in line %d\n", str, yylineno);
 }
