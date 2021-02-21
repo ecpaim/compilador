@@ -55,13 +55,37 @@ int yyerror (char const *s);
 programa: def programa | def;
 def: global | funcao;
 
-global: TK_PR_STATIC tipo lista ';'| tipo lista ';';
 tipo: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
+
+global: TK_PR_STATIC tipo lista ';'| tipo lista ';';
 lista: varglobal ',' lista | varglobal;
-varglobal: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_PR_INT ']';
+varglobal: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
 
-funcao: '?';
+funcao : func_header func_body
 
+func_header : 
+    tipo TK_IDENTIFICADOR func_params 
+    | TK_PR_STATIC tipo TK_IDENTIFICADOR func_params;
+
+func_params : 
+    '(' func_prim_arg ')' 
+    | '('')'; 
+
+func_prim_arg : 
+    tipo TK_IDENTIFICADOR ',' func_prim_arg 
+    | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg 
+    | tipo TK_IDENTIFICADOR 
+    | TK_PR_CONST tipo TK_IDENTIFICADOR;
+
+func_body :
+    '{' func_commands '}'
+    | '{''}'
+
+func_commands : 
+    | comando';' func_commands
+    | comando';'
+
+comando : TK_LIT_STRING
 %%
 
 int yyerror(const char *str)

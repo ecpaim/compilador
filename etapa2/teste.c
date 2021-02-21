@@ -1,2 +1,5 @@
-int
-float
+static int main()
+static float fun(int i, float j)
+int function(const int i)
+float fff(const int i, const float j)
+static float f(int i, const int i, const int j)

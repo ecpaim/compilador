@@ -86,8 +86,8 @@ notreal (\+|-)?{integer}(".")[a-zA-Z_]+{exponent}?
 "!=" { return TK_OC_NE; }
 "&&" { return TK_OC_AND; }
 "||" { return TK_OC_OR; }
-">>" { return TK_OC_SL; }
-"<<" { return TK_OC_SR; }
+">>" { return TK_OC_SR; }
+"<<" { return TK_OC_SL; }
 
 
 [a-zA-Z_][a-zA-Z0-9_]* { return TK_IDENTIFICADOR; }
