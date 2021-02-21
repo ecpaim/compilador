@@ -86,8 +86,8 @@ func_block :
 func_commands : 
     comando';' func_commands
     | comando';'
-    | comando_fluxo
-    | comando_fluxo func_commands;
+    | cmd_fluxo // comandos de fluxo tem bloco de comandos então n tem ; no final
+    | cmd_fluxo func_commands;
 
 comando : 
     cmd_decl_var
@@ -96,9 +96,6 @@ comando :
     | cmd_func_call
     | cmd_shift
     | cmd_simple_keyword
-
-comando_fluxo :
-    cmd_fluxo;
 
 cmd_decl_var :
     tipo lista_decl_var
