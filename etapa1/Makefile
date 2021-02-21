@@ -1,9 +1,15 @@
 all:
+	bison -d parser.y
 	flex scanner.l
-	gcc main.c lex.yy.c -o etapa1 -lfl
+	gcc -o etapa2 lex.yy.c parser.tab.c main.c -lfl
 
 teste:
-	./etapa1 < teste.c
+	./etapa2 < teste.c
 
 clean:
-	rm -rf etapa1 lex.yy.c
+	rm -rf etapa2
+	rm -rf lex.yy.o
+	rm -rf lex.yy.c
+	rm -rf parser.tab.o
+	rm -rf parser.tab.c
+	rm -rf parser.tab.h

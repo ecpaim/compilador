@@ -1,7 +1,7 @@
 %option yylineno
 %{
 	#include <stdio.h>
-	#include "tokens.h"
+	#include "parser.tab.h"
 
 	int global_var_is_bad_practice = 0;
 %}
