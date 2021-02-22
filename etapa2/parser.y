@@ -51,6 +51,7 @@ int yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
+%start programa
 %%
 
 programa: def programa | def;
@@ -150,7 +151,15 @@ cmd_iter :
     TK_PR_FOR '('cmd_attrib ':' exp ':' cmd_attrib ')' func_block
     | TK_PR_WHILE '(' exp ')' TK_PR_DO func_block;
 
-exp : TK_IDENTIFICADOR | TK_LIT_STRING | TK_LIT_INT;
+unary_op: '+' | '-' | '!' | '&' | '*' | '?' | '#';
+binary_op: '+' | '-' | '*' | '/' | '%' | '|' | '&' | '^' | TK_OC_LE | TK_OC_GE | TK_OC_EQ | TK_OC_NE | TK_OC_AND | TK_OC_OR | TK_OC_SR | TK_OC_SL;
+exp : arit;
+arit: '(' arit ')' | arit binary_op arit_unit | arit binary_op '(' arit ')' | arit '?' arit ':' arit_unit | arit '?' arit ':' '(' arit ')' | arit_unit;
+arit_unit: arit_value | unary_op arit_value;
+arit_value: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' exp ']' | cmd_func_call | TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE;
+// não sei se operadores unarios antes de '(' são válidos
+// não sei se podemos combinar expressoes e operadores logicos com aritméticos em qualquer ordem também
+
 %%
 
 int yyerror(const char *str)

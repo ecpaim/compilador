@@ -12,8 +12,8 @@ white [ \t]+
 digit [0-9]
 integer {digit}+
 exponent [eE][+-]?{integer}
-real (\+|-)?{integer}("."{integer})?{exponent}?
-notreal (\+|-)?{integer}(".")[a-zA-Z_]+{exponent}?
+real {integer}("."{integer})?{exponent}?
+notreal {integer}(".")[a-zA-Z_]+{exponent}?
 
 %%
 "\/\*"^["\*\/"] { }
@@ -79,6 +79,7 @@ notreal (\+|-)?{integer}(".")[a-zA-Z_]+{exponent}?
 "^" { return (int)'^'; }
 "." { return (int)'.'; }
 "$" { return (int)'$'; }
+"?" { return (int)'?'; }
 
 "<=" { return TK_OC_LE; }
 ">=" { return TK_OC_GE; }
@@ -93,7 +94,7 @@ notreal (\+|-)?{integer}(".")[a-zA-Z_]+{exponent}?
 [a-zA-Z_][a-zA-Z0-9_]* { return TK_IDENTIFICADOR; }
 [0-9]+[a-zA-Z_]+[a-zA-Z_]* { return TOKEN_ERRO; }
 
-(\+|-)?[0-9]+ { return TK_LIT_INT; }
+[0-9]+ { return TK_LIT_INT; }
 
 {real} { return TK_LIT_FLOAT; }
 {notreal} { return TOKEN_ERRO; }
