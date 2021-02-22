@@ -8,15 +8,15 @@ static int main() {
     id[exp] = exp;
     input id;
     output 2;
-    output "CU";
+    output "aa";
     continue;
     return 3;
     break;
     func_call(1,2);
-    func_call(1,"aa");
+    func_call(1,(true && false));
     func_call(1,ID);
     func_call();
-    func_call(1,2,2,3,4,5, "a");
+    func_call(1,2,2,3,4,5, #5^2);
 
 
     id << 1;
@@ -34,12 +34,22 @@ static int main() {
             
         }
     }
-    while(exp) do {
+    while(true && (43 + !var2)) do {
         main();
     }
-    while(exp) do{
+    while((1 * 5) ? #43 : var && var4) do{
         while(exp) do {
 
         }
     }
 }
+static int var1, var2, var3;
+float var4[43];
+float var4[+43];
+
+int main(){
+	var = true && (43 + !var2);
+	var = (*var2 - (54)) + ( true % #12^5);
+	var = (1 * 5) ? #43 : var && var4;
+}
+

@@ -51,6 +51,7 @@ int yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
+%start programa
 %%
 
 programa: def programa | def;
@@ -61,7 +62,7 @@ literais : TK_LIT_CHAR | TK_LIT_FALSE | TK_LIT_FLOAT | TK_LIT_INT | TK_LIT_STRIN
 
 global: TK_PR_STATIC tipo lista ';'| tipo lista ';';
 lista: varglobal ',' lista | varglobal;
-varglobal: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
+varglobal: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_LIT_INT ']' | TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']';
 
 funcao : func_header func_block
 
@@ -95,7 +96,7 @@ comando :
     | cmd_io
     | cmd_func_call
     | cmd_shift
-    | cmd_simple_keyword
+    | cmd_simple_keyword;
 
 cmd_decl_var :
     tipo lista_decl_var
@@ -150,7 +151,12 @@ cmd_iter :
     TK_PR_FOR '('cmd_attrib ':' exp ':' cmd_attrib ')' func_block
     | TK_PR_WHILE '(' exp ')' TK_PR_DO func_block;
 
-exp : TK_IDENTIFICADOR | TK_LIT_STRING | TK_LIT_INT;
+unary_op: '+' | '-' | '!' | '&' | '*' | '?' | '#';
+binary_op: '+' | '-' | '*' | '/' | '%' | '|' | '&' | '^' | TK_OC_LE | TK_OC_GE | TK_OC_EQ | TK_OC_NE | TK_OC_AND | TK_OC_OR | TK_OC_SR | TK_OC_SL;
+exp : '(' exp ')' | exp binary_op exp_unit | exp binary_op '(' exp ')' | exp '?' exp ':' exp_unit | exp '?' exp ':' '(' exp ')' | exp_unit;
+exp_unit: exp_value | unary_op exp_value;
+exp_value: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' exp ']' | cmd_func_call | TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE;
+
 %%
 
 int yyerror(const char *str)
