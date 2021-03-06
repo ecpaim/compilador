@@ -21,6 +21,7 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 		char tru[5];
 		char fal[6];
 		char* p;
+		char* p_linha;
 		switch(lit_type){
 			case INT:
 				new_token->valor_lit.i = atoi(yytext);
@@ -44,7 +45,10 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				break;
 			case STRING:
 				p = strdup(yytext);
-				p++; // removes first " (does it cause memory leak?)
+				p_linha = malloc(sizeof(p)-1);
+				memcpy(p_linha, p+1,sizeof(p_linha));
+				free(p);
+
 				p[strlen(p)-1] = 0; // removes last "
 				new_token->valor_lit.s = p;
 				break;	
