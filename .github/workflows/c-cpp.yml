@@ -13,9 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: checkout
-      run: cd etapa2/
     - name: make
-      run: make
+      run: cd etapa2 && make
     - name: make test
-      run: make test
+      run: cd etapa2 && make test
