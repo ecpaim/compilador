@@ -18,8 +18,8 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 
 		new_token->tipo_lit = lit_type;
 
-		char tru[5];
-		char fal[6];
+		char tru[] = "true";
+		char fal[] = "false";
 		char* p;
 		char* p_linha;
 		switch(lit_type){
@@ -33,14 +33,12 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				new_token->valor_lit.c = (char) yytext[1];	
 				break;
 			case BOOLEAN:
-				strcpy(tru, "true");
-				strcpy(fal,"false");
 				if(strcmp(yytext, tru)){
 					new_token->valor_lit.b = 1;				
 				} else if(strcmp(yytext, fal)){
 					new_token->valor_lit.b = 0;				
 				} else {
-					new_token->valor_lit.b = atoi(yytext);
+					new_token->valor_lit.b = atoi(yytext); // ?? um token boolean pode ser outra coisa?
 				}  
 				break;
 			case STRING:
@@ -52,6 +50,8 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				p[strlen(p)-1] = 0; // removes last "
 				new_token->valor_lit.s = p;
 				break;	
+			default:
+				break; // explicitamente se não tem valor literal não fazer nada
 		}
 	}
 
