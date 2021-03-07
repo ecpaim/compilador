@@ -1,8 +1,11 @@
 %{
 #include<stdio.h>
 #include <stdlib.h>
+#include "tree.h"
 #include "token_info.h"
 #define YYERROR_VERBOSE 1
+
+extern void *arvore;
 
 extern int yylineno;
 int yylex(void);
@@ -11,6 +14,7 @@ int yyerror (char const *s);
 
 %union{
 	TOKEN_INFO *valor_lexico;
+    node_t *no;
 }
 
 %token TK_PR_INT
@@ -40,27 +44,42 @@ int yyerror (char const *s);
 %token TK_PR_PROTECTED
 %token TK_PR_END
 %token TK_PR_DEFAULT
-%token TK_OC_LE
-%token TK_OC_GE
-%token TK_OC_EQ
-%token TK_OC_NE
-%token TK_OC_AND
-%token TK_OC_OR
-%token TK_OC_SL
-%token TK_OC_SR
-%token TK_LIT_INT
-%token TK_LIT_FLOAT
-%token TK_LIT_FALSE
-%token TK_LIT_TRUE
-%token TK_LIT_CHAR
-%token TK_LIT_STRING
-%token TK_IDENTIFICADOR
+%token<valor_lexico> TK_OC_LE
+%token<valor_lexico> TK_OC_GE
+%token<valor_lexico> TK_OC_EQ
+%token<valor_lexico> TK_OC_NE
+%token<valor_lexico> TK_OC_AND
+%token<valor_lexico> TK_OC_OR
+%token<valor_lexico> TK_OC_SL
+%token<valor_lexico> TK_OC_SR
+%token<valor_lexico> TK_LIT_INT
+%token<valor_lexico> TK_LIT_FLOAT
+%token<valor_lexico> TK_LIT_FALSE
+%token<valor_lexico> TK_LIT_TRUE
+%token<valor_lexico> TK_LIT_CHAR
+%token<valor_lexico> TK_LIT_STRING
+%token<valor_lexico> TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
-%start programa
-%%
+%type<no> programa_star programa def global funcao
+%type<no> tipo literais
+%type<no> lista varglobal
+%type<no> func_header func_params func_prim_arg func_block func_commands
+%type<no> comando cmd_decl_var lista_decl_var inic_decl_var cmd_attrib cmd_io cmd_func_call cmd_func_call_args 
+%type<no> cmd_shift shift_op cmd_simple_keyword cmd_fluxo cmd_fluxo_else cmd_iter
+%type<no> unary_op binary_op
+%type<no> exp exp_unit exp_value
 
-programa: def programa | ;
+
+%start programa_star
+%%
+programa_star: 
+    programa { arvore = $1; }
+;
+programa: 
+    def programa { $$ = join_nodes($1, $2); }
+    |  { $$ = NULL; }
+;
 def: global | funcao;
 
 tipo: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
@@ -164,7 +183,9 @@ exp_unit: exp_value | unary_op exp_value;
 exp_value: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' exp ']' | cmd_func_call | TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE;
 
 %%
-
+/*
+    TODO: REESCREVER ISSO AQUI QUE TIROU PONTO NA ETAPA2
+*/
 int yyerror(const char *str)
 {
     fprintf(stderr,"error: %s in line %d\n", str, yylineno);

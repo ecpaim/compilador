@@ -1,6 +1,7 @@
 %option yylineno
 %{
 	#include <stdio.h>
+	#include "tree.h"
 	#include "token_info.h"
 	#include "parser.tab.h"
 
@@ -27,7 +28,7 @@ notreal {integer}(".")[a-zA-Z_]+{exponent}?
 "true" { yylval.valor_lexico = add_token(yylineno, LIT, yytext, BOOLEAN); return TK_LIT_TRUE; }
 \".*\" { yylval.valor_lexico = add_token(yylineno, LIT, yytext, STRING); return TK_LIT_STRING; }
 
-"int" { return TK_PR_INT; }
+"int" {  return TK_PR_INT; }
 "float" { return TK_PR_FLOAT; }
 "bool" { return TK_PR_BOOL; }
 "char" { return TK_PR_CHAR; }
@@ -97,9 +98,9 @@ notreal {integer}(".")[a-zA-Z_]+{exponent}?
 [0-9]+ { yylval.valor_lexico = add_token(yylineno, LIT, yytext, INT); return TK_LIT_INT; }
 
 {real} { yylval.valor_lexico = add_token(yylineno, LIT, yytext, FLOAT); return TK_LIT_FLOAT; }
-{notreal} { yylval.valor_lexico = { return TOKEN_ERRO; }
+{notreal} { return TOKEN_ERRO; }
 
-'.{1}' { return TK_LIT_CHAR; }
+'.{1}' { yylval.valor_lexico = add_token(yylineno, LIT, yytext, CHAR); return TK_LIT_CHAR; }
 . { return TOKEN_ERRO; }
 
 %%

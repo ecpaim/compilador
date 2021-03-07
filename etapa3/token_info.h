@@ -5,7 +5,6 @@ enum tipo_lit{INT, FLOAT, CHAR, BOOLEAN, STRING, OC_ID_SC};
 typedef struct token_info{
 	int linha;
 	int tipo;
-	char* valor; // maybe we'll need to dealloc this with free()
 	int tipo_lit;
 	union {
 		int i;
@@ -13,7 +12,7 @@ typedef struct token_info{
 		char c;
 		int b;
 		char* s;		
-	} valor_lit;
+	} valor;
 	
 } TOKEN_INFO;
 

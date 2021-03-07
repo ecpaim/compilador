@@ -10,13 +10,12 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 
 	new_token->linha = line;
 	new_token->tipo = type;
+	new_token->tipo_lit = lit_type;
 	
 	if(type != LIT){
-		new_token->valor = strdup(yytext);
+		new_token->valor.s = strdup(yytext);
 	
 	} else { //token is literal
-
-		new_token->tipo_lit = lit_type;
 
 		char tru[] = "true";
 		char fal[] = "false";
@@ -24,21 +23,21 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 		char* p_linha;
 		switch(lit_type){
 			case INT:
-				new_token->valor_lit.i = atoi(yytext);
+				new_token->valor.i = atoi(yytext);
 				break;		
 			case FLOAT:
-				new_token->valor_lit.f = atof(yytext);
+				new_token->valor.f = atof(yytext);
 				break;
 			case CHAR:
-				new_token->valor_lit.c = (char) yytext[1];	
+				new_token->valor.c = (char) yytext[1];	
 				break;
 			case BOOLEAN:
 				if(strcmp(yytext, tru)){
-					new_token->valor_lit.b = 1;				
+					new_token->valor.b = 1;				
 				} else if(strcmp(yytext, fal)){
-					new_token->valor_lit.b = 0;				
+					new_token->valor.b = 0;				
 				} else {
-					new_token->valor_lit.b = atoi(yytext); // ?? um token boolean pode ser outra coisa?
+					new_token->valor.b = atoi(yytext); // ?? um token boolean pode ser outra coisa?
 				}  
 				break;
 			case STRING:
@@ -48,7 +47,7 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				free(p);
 
 				p[strlen(p)-1] = 0; // removes last "
-				new_token->valor_lit.s = p;
+				new_token->valor.s = p;
 				break;	
 			default:
 				break; // explicitamente se não tem valor literal não fazer nada
