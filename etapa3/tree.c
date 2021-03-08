@@ -4,8 +4,9 @@
 #include <string.h>
 
 
-node_t* cria_nodo(char *label){
+node_t* cria_nodo(char *label, TOKEN_INFO *valor){
     node_t *nodo = malloc(sizeof(node_t));
+    nodo->value = valor;
     nodo->n_child = 0;
     nodo->label = strdup(label);
     nodo->children = NULL;
@@ -44,7 +45,7 @@ void libera(node_t* tree){ // essa função provavelmente tá errada
 }
 
 node_t* add_child(node_t* tree, char* label){
-    node_t* new_node = cria_nodo(label);
+    node_t* new_node = cria_nodo(label, NULL);
     new_node->parent = tree;
 
     tree->children = realloc(tree->children, (tree->n_child + 2) * sizeof(*new_node)); // aumento o numero de filhos no ponteiro. o +2 é oq quanto ta em 0 eu vou por 1 preciso de espaço p +2 (null e ptr)
@@ -65,7 +66,7 @@ node_t* join_nodes(node_t* parent, node_t* child){ // maybe this replaces add_ne
 
 
 node_t* add_next_cmd(node_t* tree, char* label){
-    node_t* new_node = cria_nodo(label);
+    node_t* new_node = cria_nodo(label,NULL);
     new_node->parent = tree;
 
     tree->next_cmd = new_node;

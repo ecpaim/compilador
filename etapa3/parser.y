@@ -80,17 +80,44 @@ programa:
     def programa { $$ = join_nodes($1, $2); }
     |  { $$ = NULL; }
 ;
-def: global | funcao;
+def: 
+    global { }
+    | funcao { $$ = $1; }
+;
 
-tipo: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
-literais : TK_LIT_CHAR | TK_LIT_FALSE | TK_LIT_FLOAT | TK_LIT_INT | TK_LIT_STRING | TK_LIT_TRUE;
+tipo: 
+	TK_PR_INT { }
+	| TK_PR_FLOAT { }
+	| TK_PR_BOOL {  }
+	| TK_PR_CHAR { }
+	| TK_PR_STRING { }
+; 
+literais : 
+	TK_LIT_CHAR { char str[16]; sprintf(str,"%c",$1->valor.c); $$ = cria_nodo(str,$1); }
+	| TK_LIT_FALSE { char str[16]; sprintf(str,"%d",$1->valor.b); $$ = cria_nodo(str,$1); }
+	| TK_LIT_FLOAT { char str[16]; sprintf(str,"%.2f",$1->valor.f); $$ = cria_nodo(str,$1); }
+	| TK_LIT_INT { char str[16]; sprintf(str,"%d",$1->valor.i); $$ = cria_nodo(str,$1); }
+	| TK_LIT_STRING { $$ = cria_nodo($1->valor.s,$1); }
+	| TK_LIT_TRUE { char str[16]; sprintf(str,"%d",$1->valor.b); $$ = cria_nodo(str,$1); }
+;
 
-global: TK_PR_STATIC tipo lista ';'| tipo lista ';';
-lista: varglobal ',' lista | varglobal;
-varglobal: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_LIT_INT ']' | TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']';
+global: 
+	TK_PR_STATIC tipo lista ';' { $$ = $3; }
+	| tipo lista ';' { $$ = $2; }
+;
+lista: 
+	varglobal ',' lista { /* variaveis sem inicializacao nao fazem parte da arvore */ }
+	| varglobal { }
+;
+varglobal: 
+	TK_IDENTIFICADOR {  }
+	| TK_IDENTIFICADOR '[' TK_LIT_INT ']' { }
+	| TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']' { }
+;
 
-funcao : func_header func_block
-
+funcao : 
+	func_header func_block 
+;
 func_header : 
     tipo TK_IDENTIFICADOR func_params 
     | TK_PR_STATIC tipo TK_IDENTIFICADOR func_params;

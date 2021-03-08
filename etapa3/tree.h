@@ -1,6 +1,9 @@
+#include "token_info.h"
+
 typedef struct str_node {
     // cada nodo tem: um valor e uma lista encadeada de filhos
     char *label; // label precisa pra impressão, mas sera q n devia ser o TOKEN? not sure
+    TOKEN_INFO* value; // só é preenchido nos nodos folha
     struct str_node** children;
     int n_child; // numero de filhos (pq é um array de ponteiros) 
     struct str_node* parent;
@@ -9,7 +12,7 @@ typedef struct str_node {
     // Se tiver 3 filhos como sabemos se o último é o comando do THEN ou o próximo nodo?
 } node_t;
 
-node_t* cria_nodo(char *label);
+node_t* cria_nodo(char *label, TOKEN_INFO *valor);
 
 void exporta(node_t* tree);
 
