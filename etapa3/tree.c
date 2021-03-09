@@ -38,21 +38,24 @@ void libera(node_t* tree){ // essa função provavelmente tá errada
         libera(tree->next_cmd);
     }
 
-    free(tree->next_cmd);
-    free(tree->children);
-    free(tree->label);
-    free(tree);
+    if(tree->next_cmd != NULL)
+        free(tree->next_cmd);
+    if(tree->children != NULL)
+        free(tree->children);
+    if(tree->label != NULL)
+        free(tree->label);
+    if(tree != NULL)
+        free(tree);
 }
 
-node_t* add_child(node_t* tree, char* label){
-    node_t* new_node = cria_nodo(label, NULL);
-    new_node->parent = tree;
+node_t* add_child(node_t* tree, node_t* child){
+    child->parent = tree;
 
-    tree->children = realloc(tree->children, (tree->n_child + 2) * sizeof(*new_node)); // aumento o numero de filhos no ponteiro. o +2 é oq quanto ta em 0 eu vou por 1 preciso de espaço p +2 (null e ptr)
-    tree->children[tree->n_child++] = new_node;
+    tree->children = realloc(tree->children, (tree->n_child + 2) * sizeof(*child)); // aumento o numero de filhos no ponteiro. o +2 é oq quanto ta em 0 eu vou por 1 preciso de espaço p +2 (null e ptr)
+    tree->children[tree->n_child++] = child;
     tree->children[tree->n_child] = NULL;
     
-    return new_node;
+    return child;
 }
 
 node_t* join_nodes(node_t* parent, node_t* child){ // maybe this replaces add_next_cmd? idk so I kept both
