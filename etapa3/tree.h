@@ -18,7 +18,7 @@ void exporta(node_t* tree);
 
 void libera(node_t* tree);
 
-node_t* add_child(node_t* tree, char* label);
+node_t* add_child(node_t* tree, node_t* child);
 
 node_t* join_nodes(node_t* parent, node_t* child);
 
