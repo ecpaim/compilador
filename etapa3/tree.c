@@ -26,26 +26,32 @@ void exporta(node_t* tree){
         exporta(tree->children[i]);
     } 
     if (tree->next_cmd != NULL){
+        printf("%p, %p\n", tree, tree->next_cmd);
         exporta(tree->next_cmd);
     }  
 }
 
 void libera(node_t* tree){ // essa função provavelmente tá errada
-    for (int i=0; i < tree->n_child; i++){
+    int n_child = tree->n_child;
+    for (int i=0; i < n_child; i++){
+        tree->n_child--;
         libera(tree->children[i]);
     } 
     if (tree->next_cmd != NULL){
         libera(tree->next_cmd);
     }
 
-    if(tree->next_cmd != NULL)
-        free(tree->next_cmd);
-    if(tree->children != NULL)
-        free(tree->children);
-    if(tree->label != NULL)
-        free(tree->label);
-    if(tree != NULL)
+    if(tree != NULL) {
+        printf("Liberando nodo %s\n", tree->label);
+        if(tree->label != NULL)
+            free(tree->label);
+        if(tree->value != NULL)
+            free(tree->value);
+        if(tree->n_child == 0){
+            free(tree->children);
+        }
         free(tree);
+    }
 }
 
 node_t* add_child(node_t* tree, node_t* child){
@@ -76,15 +82,21 @@ node_t* add_next_cmd(node_t* tree, char* label){
     
     return new_node;
 }
-/*
 
-int main(){
-    char n[] = "diego";
-    void* arvore = cria_nodo(n);
-    add_child(arvore, "diego junior");
-    node_t* filha = add_child(arvore, "diega");
-    add_child(filha, "dieguinho");
-    exporta(arvore);
-    libera(arvore);
-}
-*/
+// int main(){
+//     char n[] = "diego";
+//     void* arvore = cria_nodo(n, NULL);
+//     void* f1 = cria_nodo("diego junior", NULL);
+//     void* f2 = cria_nodo("diega", NULL);
+//     void* f3 = cria_nodo("dieguinho", NULL);
+//     void* next_cmd = cria_nodo("next_cmd", NULL);
+
+//     add_child(arvore, f1);
+//     add_child(arvore, f2);
+//     add_child(f2, f3);
+//     join_nodes(arvore, next_cmd);
+
+
+//     exporta(arvore);
+//     libera(arvore);
+// }
