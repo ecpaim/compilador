@@ -56,31 +56,31 @@ notreal {integer}(".")[a-zA-Z_]+{exponent}?
 "end" { return TK_PR_END; }
 "default" { return TK_PR_DEFAULT; }
 
-"=" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'='; }
-";" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)';'; }
-"," { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)','; }
-":" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)':'; }
-"(" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'('; }
-")" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)')'; }
-"[" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'['; }
-"]" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)']'; }
-"{" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'{'; }
-"}" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'}'; }
-"+" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'+'; }
-"-" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'-'; }
-"|" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'|'; }
-"*" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'*'; }
-"/" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'/'; }
-"<" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'<'; }
-">" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'>'; }
-"!" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'!'; }
-"&" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'&'; }
-"%" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'%'; }
-"#" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'#'; }
-"^" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'^'; }
-"." { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'.'; }
-"$" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'$'; }
-"?" { add_token(yylineno, CHAR_ESP, yytext, OC_ID_SC); return (int)'?'; }
+"=" { return (int)'='; }
+";" {  return (int)';'; }
+"," {  return (int)','; }
+":" {  return (int)':'; }
+"(" {  return (int)'('; }
+")" {  return (int)')'; }
+"[" {  return (int)'['; }
+"]" {  return (int)']'; }
+"{" {  return (int)'{'; }
+"}" {  return (int)'}'; }
+"+" { return (int)'+'; }
+"-" { return (int)'-'; }
+"|" { return (int)'|'; }
+"*" { return (int)'*'; }
+"/" { return (int)'/'; }
+"<" { return (int)'<'; }
+">" { return (int)'>'; }
+"!" { return (int)'!'; }
+"&" { return (int)'&'; }
+"%" { return (int)'%'; }
+"#" { return (int)'#'; }
+"^" { return (int)'^'; }
+"." {  return (int)'.'; }
+"$" { return (int)'$'; }
+"?" { return (int)'?'; }
 
 "<=" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_LE; }
 ">=" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_GE; }
