@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+void free_token(TOKEN_INFO* tk){
+	if(tk != NULL){
+		if(tk->tipo != LIT || tk->tipo_lit == STRING){
+            free(tk->valor.s);
+        }
+        free(tk);
+	}
+	return;
+}
 
 TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 
@@ -16,7 +25,7 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 		new_token->valor.s = strdup(yytext);
 	
 	} else { //token is literal
-
+		
 		char tru[] = "true";
 		char fal[] = "false";
 		char* p;
@@ -32,22 +41,22 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				new_token->valor.c = (char) yytext[1];	
 				break;
 			case BOOLEAN:
-				if(strcmp(yytext, tru)){
+				if(strcmp(yytext, tru) == 0){
 					new_token->valor.b = 1;				
-				} else if(strcmp(yytext, fal)){
+				} else if(strcmp(yytext, fal) == 0){
 					new_token->valor.b = 0;				
 				} else {
-					new_token->valor.b = atoi(yytext); // ?? um token boolean pode ser outra coisa?
+					new_token->valor.b = atoi(yytext); 
 				}  
 				break;
 			case STRING:
-				p = strdup(yytext);
+				p = strdup(yytext); 
 				p_linha = malloc(sizeof(p)-1);
 				memcpy(p_linha, p+1,sizeof(p_linha));
 				free(p);
 
-				p[strlen(p)-1] = 0; // removes last "
-				new_token->valor.s = p;
+				p_linha[strlen(p_linha)-1] = 0; // removes last "
+				new_token->valor.s = p_linha;
 				break;	
 			default:
 				break; // explicitamente se não tem valor literal não fazer nada

@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "token_info.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,9 +18,9 @@ node_t* cria_nodo(char *label, TOKEN_INFO *valor){
 }
 
 void exporta(node_t* tree){
-    if (tree->label != NULL){
-        printf("%p [label=\"%s\"]\n", tree, tree->label);
-    }
+    if (tree == NULL)
+        return;
+
 
     for (int i=0; i < tree->n_child; i++){
         printf("%p, %p\n", tree, tree->children[i]);
@@ -29,9 +30,16 @@ void exporta(node_t* tree){
         printf("%p, %p\n", tree, tree->next_cmd);
         exporta(tree->next_cmd);
     }  
+
+    if (tree->label != NULL){
+        printf("%p [label=\"%s\"]\n", tree, tree->label);
+    }
 }
 
-void libera(node_t* tree){ // essa função provavelmente tá errada
+void libera(node_t* tree){ 
+    if (tree == NULL)
+        return;
+    
     int n_child = tree->n_child;
     for (int i=0; i < n_child; i++){
         tree->n_child--;
@@ -42,11 +50,14 @@ void libera(node_t* tree){ // essa função provavelmente tá errada
     }
 
     if(tree != NULL) {
-        printf("Liberando nodo %s\n", tree->label);
         if(tree->label != NULL)
             free(tree->label);
-        if(tree->value != NULL)
+        if(tree->value != NULL){
+            if(tree->value->tipo != LIT || tree->value->tipo_lit == STRING){ // libera o espaço da string que tem nos TOKEN_INFO
+                free(tree->value->valor.s);
+            }
             free(tree->value);
+        }
         if(tree->n_child == 0){
             free(tree->children);
         }
@@ -55,6 +66,9 @@ void libera(node_t* tree){ // essa função provavelmente tá errada
 }
 
 node_t* add_child(node_t* tree, node_t* child){
+    if (tree == NULL || child == NULL)
+        return NULL;
+    // não adiciona nodo filho em/de nodo nulo
     child->parent = tree;
 
     tree->children = realloc(tree->children, (tree->n_child + 2) * sizeof(*child)); // aumento o numero de filhos no ponteiro. o +2 é oq quanto ta em 0 eu vou por 1 preciso de espaço p +2 (null e ptr)
@@ -64,39 +78,15 @@ node_t* add_child(node_t* tree, node_t* child){
     return child;
 }
 
-node_t* join_nodes(node_t* parent, node_t* child){ // maybe this replaces add_next_cmd? idk so I kept both
+node_t* join_nodes(node_t* parent, node_t* child){ 
+    if( parent == NULL) // se o parent for null retorna a child e vice versa. se os dois forem null tambem
+        return child;
+    else if (child == NULL)
+        return parent;
+    
     
     child->parent = parent;
-
     parent->next_cmd = child;
     
     return parent;
 }
-
-
-node_t* add_next_cmd(node_t* tree, char* label){
-    node_t* new_node = cria_nodo(label,NULL);
-    new_node->parent = tree;
-
-    tree->next_cmd = new_node;
-    
-    return new_node;
-}
-
-// int main(){
-//     char n[] = "diego";
-//     void* arvore = cria_nodo(n, NULL);
-//     void* f1 = cria_nodo("diego junior", NULL);
-//     void* f2 = cria_nodo("diega", NULL);
-//     void* f3 = cria_nodo("dieguinho", NULL);
-//     void* next_cmd = cria_nodo("next_cmd", NULL);
-
-//     add_child(arvore, f1);
-//     add_child(arvore, f2);
-//     add_child(f2, f3);
-//     join_nodes(arvore, next_cmd);
-
-
-//     exporta(arvore);
-//     libera(arvore);
-// }

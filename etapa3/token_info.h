@@ -19,5 +19,6 @@ typedef struct token_info{
 
 TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type);
 
+void free_token(TOKEN_INFO* tk);
 
 #endif

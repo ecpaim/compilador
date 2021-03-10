@@ -44,14 +44,14 @@ int yyerror (char const *s);
 %token TK_PR_PROTECTED
 %token TK_PR_END
 %token TK_PR_DEFAULT
-%token<valor_lexico> TK_OC_LE
-%token<valor_lexico> TK_OC_GE
-%token<valor_lexico> TK_OC_EQ
-%token<valor_lexico> TK_OC_NE
-%token<valor_lexico> TK_OC_AND
-%token<valor_lexico> TK_OC_OR
-%token<valor_lexico> TK_OC_SL
-%token<valor_lexico> TK_OC_SR
+%token TK_OC_LE
+%token TK_OC_GE
+%token TK_OC_EQ
+%token TK_OC_NE
+%token TK_OC_AND
+%token TK_OC_OR
+%token TK_OC_SL
+%token TK_OC_SR
 %token<valor_lexico> TK_LIT_INT
 %token<valor_lexico> TK_LIT_FLOAT
 %token<valor_lexico> TK_LIT_FALSE
@@ -81,16 +81,16 @@ programa:
     |  { $$ = NULL; }
 ;
 def: 
-    global { }
+    global { $$ = NULL; }
     | funcao { $$ = $1; }
 ;
 
 tipo: 
-	TK_PR_INT { }
-	| TK_PR_FLOAT { }
-	| TK_PR_BOOL {  }
-	| TK_PR_CHAR { }
-	| TK_PR_STRING { }
+	TK_PR_INT { $$ = NULL; }
+	| TK_PR_FLOAT { $$ = NULL; }
+	| TK_PR_BOOL { $$ = NULL; }
+	| TK_PR_CHAR { $$ = NULL; }
+	| TK_PR_STRING { $$ = NULL; }
 ; 
 literais : 
 	TK_LIT_CHAR { char str[16]; sprintf(str,"%c",$1->valor.c); $$ = cria_nodo(str,$1); }
@@ -106,33 +106,43 @@ global:
 	| tipo lista ';' { $$ = $2; }
 ;
 lista: 
-	varglobal ',' lista { /* variaveis sem inicializacao nao fazem parte da arvore */ }
-	| varglobal { }
+	varglobal ',' lista { $$ = NULL; }
+	| varglobal { $$ = NULL; }
 ;
 varglobal: 
-	TK_IDENTIFICADOR { free($1); }
-	| TK_IDENTIFICADOR '[' TK_LIT_INT ']' { free($1); free($3); }
-	| TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']' { free($1); free($4); }
+	TK_IDENTIFICADOR { free_token($1); $$ = NULL;}
+	| TK_IDENTIFICADOR '[' TK_LIT_INT ']' { free_token($1); free_token($3); $$ = NULL; }
+	| TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']' { free_token($1); free_token($4); $$ = NULL; }
 ;
 
 funcao : 
-	func_header func_block { $$ = $2; }
+	func_header func_block { 
+        add_child($1, $2); 
+        $$ = $1; }
 ;
 func_header : 
-    tipo TK_IDENTIFICADOR func_params { free($2); }
-    | TK_PR_STATIC tipo TK_IDENTIFICADOR func_params { free($3); }
+    tipo TK_IDENTIFICADOR func_params { 
+        char str[16]; 
+        sprintf(str,"%s",$2->valor.s); 
+        $$ = cria_nodo(str, $2);
+      }
+    | TK_PR_STATIC tipo TK_IDENTIFICADOR func_params { 
+        char str[16]; 
+        sprintf(str,"%s",$3->valor.s); 
+        $$ = cria_nodo(str, $3);
+     }
 ;
 
 func_params : 
-    '(' func_prim_arg ')' { }
-    | '('')' { }
+    '(' func_prim_arg ')' { $$ = NULL; }
+    | '('')' { $$ = NULL; }
 ; 
 
 func_prim_arg : 
-    tipo TK_IDENTIFICADOR ',' func_prim_arg { free($2); }
-    | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { free($3); }
-    | tipo TK_IDENTIFICADOR { free($2); }
-    | TK_PR_CONST tipo TK_IDENTIFICADOR { free($3); }
+    tipo TK_IDENTIFICADOR ',' func_prim_arg { free_token($2); }
+    | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { free_token($3); }
+    | tipo TK_IDENTIFICADOR { free_token($2); }
+    | TK_PR_CONST tipo TK_IDENTIFICADOR { free_token($3); }
 ; 
 
 func_block :
@@ -142,8 +152,8 @@ func_block :
 
 func_commands : 
     comando';' func_commands { $$ = join_nodes($1, $3); } 
-    | comando';' { $$ = join_nodes($1, NULL); } // por default tem null como next_cmd
-    | cmd_fluxo { $$ = join_nodes($1, NULL); }
+    | comando';' { $$ = $1; }
+    | cmd_fluxo { $$ = $1; }
     | cmd_fluxo func_commands { $$ = join_nodes($1, $2); }
 ;
 
@@ -167,16 +177,16 @@ lista_decl_var :
     TK_IDENTIFICADOR inic_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  }
-    | TK_IDENTIFICADOR { free($1); $$ = NULL; }
+    | TK_IDENTIFICADOR { free_token($1); $$ = NULL; }
     | TK_IDENTIFICADOR inic_decl_var ',' lista_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  
          $$ = join_nodes($$, $4); }
-    | TK_IDENTIFICADOR ',' lista_decl_var { free($1); $$ = $3; }
+    | TK_IDENTIFICADOR ',' lista_decl_var { free_token($1); $$ = $3; }
 ;
 inic_decl_var :
-    TK_OC_LE TK_IDENTIFICADOR { free($1); char str[16]; sprintf(str,"%s",$2->valor.s); $$ = cria_nodo(str,$2); }
-    | TK_OC_LE literais { free($1); $$ = $2; }
+    TK_OC_LE TK_IDENTIFICADOR { char str[16]; sprintf(str,"%s",$2->valor.s); $$ = cria_nodo(str,$2); }
+    | TK_OC_LE literais {  $$ = $2; }
 ;
 cmd_attrib : 
     TK_IDENTIFICADOR '=' exp { $$ = cria_nodo("=", NULL); 
@@ -207,11 +217,11 @@ cmd_func_call :
 cmd_func_call_args :
     exp { $$ = $1; }
     | exp ',' cmd_func_call_args { $$ = join_nodes($1,$3); }
-    | { }
+    | { $$ = NULL; }
 ;
 
 cmd_shift :
-    TK_IDENTIFICADOR shift_op TK_LIT_INT { char str[16]; sprintf(str,"call %s",$1->valor.s); node_t* aux = cria_nodo(str,$1); 
+    TK_IDENTIFICADOR shift_op TK_LIT_INT { char str[16]; sprintf(str,"%s",$1->valor.s); node_t* aux = cria_nodo(str,$1); 
        char str2[16]; sprintf(str2,"%d",$3->valor.i); node_t* aux2 = cria_nodo(str2,$3); 
        add_child($2, aux); add_child($2, aux2); $$ = $2; }
     | TK_IDENTIFICADOR'['exp']' shift_op TK_LIT_INT { char str[16]; sprintf(str,"%s",$1->valor.s); node_t* aux = cria_nodo(str,$1); 
@@ -222,8 +232,8 @@ cmd_shift :
         }
 ;
 shift_op : 
-    TK_OC_SL { $$ = cria_nodo("<<",$1); }
-    | TK_OC_SR { $$ = cria_nodo(">>",$1); }
+    TK_OC_SL { $$ = cria_nodo("<<",NULL); }
+    | TK_OC_SR { $$ = cria_nodo(">>", NULL); }
 ;
 cmd_simple_keyword : 
 	TK_PR_RETURN exp { $$ = cria_nodo("return", NULL); add_child($$,$2); }
@@ -237,7 +247,7 @@ cmd_fluxo :
         add_child($$, $3);
         add_child($$, $5);
         add_child($$, $6);
-        }
+    }
     | cmd_iter { $$ = $1; }
 ;
 
@@ -278,14 +288,14 @@ binary_op:
     | '|' {  $$ = cria_nodo("|", NULL); }
     | '&' {  $$ = cria_nodo("&", NULL); }
     | '^' {  $$ = cria_nodo("^", NULL); }
-    | TK_OC_LE { $$ = cria_nodo("<=",$1); }
-    | TK_OC_GE { $$ = cria_nodo(">=",$1); }
-    | TK_OC_EQ { $$ = cria_nodo("==",$1); }
-    | TK_OC_NE { $$ = cria_nodo("!=",$1); }
-    | TK_OC_AND { $$ = cria_nodo("&&",$1); }
-    | TK_OC_OR { $$ = cria_nodo("||",$1); }
-    | TK_OC_SR { $$ = cria_nodo(">>",$1); }
-    | TK_OC_SL { $$ = cria_nodo("<<",$1); }
+    | TK_OC_LE { $$ = cria_nodo("<=",NULL); }
+    | TK_OC_GE { $$ = cria_nodo(">=",NULL); }
+    | TK_OC_EQ { $$ = cria_nodo("==",NULL); }
+    | TK_OC_NE { $$ = cria_nodo("!=",NULL); }
+    | TK_OC_AND { $$ = cria_nodo("&&",NULL); }
+    | TK_OC_OR { $$ = cria_nodo("||",NULL); }
+    | TK_OC_SR { $$ = cria_nodo(">>",NULL); }
+    | TK_OC_SL { $$ = cria_nodo("<<",NULL); }
 ;
 exp : 
     '(' exp ')' { $$ = $2; }
@@ -306,17 +316,14 @@ exp_value:
     | cmd_func_call { $$ = $1; }
     | TK_LIT_INT { char str[16]; sprintf(str,"%d",$1->valor.i); $$ = cria_nodo(str,$1); }
     | TK_LIT_FLOAT { char str[16]; sprintf(str,"%f",$1->valor.f); $$ = cria_nodo(str,$1); }
-    | TK_LIT_FALSE { char str[16]; sprintf(str,"%d",$1->valor.b); $$ = cria_nodo(str,$1); }
-    | TK_LIT_TRUE { char str[16]; sprintf(str,"%d",$1->valor.b); $$ = cria_nodo(str,$1); }
+    | TK_LIT_FALSE { $$ = cria_nodo("false",$1); }
+    | TK_LIT_TRUE { $$ = cria_nodo("true",$1); }
 ;
 
 %%
-/*
-    TODO: REESCREVER ISSO AQUI QUE TIROU PONTO NA ETAPA2
-*/
 int yyerror(const char *str)
 {
-    fprintf(stderr,"error: %s in line %d\n", str, yylineno);
+    fprintf("error: %s in line %d\n", str, yylineno);
     return 1;
 }
 

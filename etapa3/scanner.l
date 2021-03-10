@@ -82,14 +82,14 @@ notreal {integer}(".")[a-zA-Z_]+{exponent}?
 "$" { return (int)'$'; }
 "?" { return (int)'?'; }
 
-"<=" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_LE; }
-">=" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_GE; }
-"==" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_EQ; }
-"!=" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_NE; }
-"&&" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_AND; }
-"||" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_OR; }
-">>" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_SR; }
-"<<" { add_token(yylineno, OP_COMP, yytext, OC_ID_SC); return TK_OC_SL; }
+"<=" {  return TK_OC_LE; }
+">=" {  return TK_OC_GE; }
+"==" {  return TK_OC_EQ; }
+"!=" {  return TK_OC_NE; }
+"&&" {  return TK_OC_AND; }
+"||" {  return TK_OC_OR; }
+">>" {  return TK_OC_SR; }
+"<<" {  return TK_OC_SL; }
 
 
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.valor_lexico = add_token(yylineno, IDENT, yytext, OC_ID_SC); return TK_IDENTIFICADOR; }
