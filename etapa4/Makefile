@@ -8,6 +8,6 @@ teste:
 	./etapa4 < teste.c > saida
 
 clean:
-	rm -rf saida grafico etapa4 lex.yy.c lex.yy.o main.o parser.tab.c parser.tab.o parser.tab.h debug token_info.o tree.o
+	rm -rf pilha saida grafico etapa4 lex.yy.c lex.yy.o main.o parser.tab.c parser.tab.o parser.tab.h debug token_info.o tree.o
 
 
