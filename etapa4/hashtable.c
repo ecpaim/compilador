@@ -1,3 +1,4 @@
+#include "token_info.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,13 +10,26 @@
 - argumentos e seus tipos (no caso de funções) ˜
 - dados do valor do token pelo yylval (veja E3)
 */
+enum conteudo_tipo = {INT, FLOAT, CHAR, BOOLEAN, STRING, UNDEFINED}; // os nodos da arvore tambem tem esses tipos
+enum conteudo_nat = { LIT, VAR, FUNC, VET};
+
+typedef struct conteudo{
+    int linha; //essa informação já vai estar no yylval
+    conteudo_nat natureza; // literal, variavel, funcao ou vetor
+    conteudo_tipo tipo; // int, float....
+    int tamanho; // baseado no tipo
+    void *argumentos; // isso vai ter que ser uma lista
+    TOKEN_INFO *valor; // o yylval
+
+} CONTEUDO;
 
 struct hash_entry
 {                           // table entry:
     struct hash_entry *next; // prox entrada
     char *name;             // chave única do conteúdo
-    void *content;          // conteúdo da entrada, mudar pra o que precisamos mais pra frente, talvez criar uma struct aqui?
+    CONTEUDO *content;          // conteúdo da entrada, mudar pra o que precisamos mais pra frente, talvez criar uma struct aqui?
 };
+
 
 typedef struct hash_entry HASH_TBL;
 #define HASHSIZE 100
@@ -98,7 +112,7 @@ void clear_table(HASH_TBL *hashtab[], int hash_tab_size)
         }
     }
 }
-
+/*
 int main()
 {
     HASH_TBL* hashtab[100];
@@ -121,3 +135,4 @@ int main()
     printf("liberando tabela: \n");
     clear_table(hashtab, 100);
 }
+*/
