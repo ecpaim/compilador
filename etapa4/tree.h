@@ -1,9 +1,10 @@
 #include "token_info.h"
-
+#include "stack.h"
 typedef struct str_node {
     // cada nodo tem: um valor e uma lista encadeada de filhos
     char *label; // label precisa pra impressão, mas sera q n devia ser o TOKEN? not sure
     TOKEN_INFO* value; // só é preenchido nos nodos folha
+    int tam; // só é usado em nodos que representam vetores
     struct str_node** children;
     int n_child; // numero de filhos (pq é um array de ponteiros) 
     struct str_node* parent;
@@ -13,9 +14,11 @@ typedef struct str_node {
 
 } node_t;
 
-node_t* cria_nodo_tipado(char *type, node_t* nodo1, node_t* nodo2, TOKEN_INFO *valor1, TOKEN_INFO *valor2);
+int add_var(STACK* stack, char *type, node_t* nodo1, node_t* nodo2, TOKEN_INFO *valor1, TOKEN_INFO *valor2);
 
 node_t* cria_nodo(char *label, TOKEN_INFO *valor);
+
+void libera_nodo(node_t* nodo);
 
 void exporta(node_t* tree);
 

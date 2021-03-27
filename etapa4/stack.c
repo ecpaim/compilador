@@ -1,12 +1,7 @@
-#include "hashtable.c"
+#include "stack.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct stack {
-	HASH_TBL* hashtab[HASHSIZE];
-	struct stack *next; // the element below 
-
-} STACK;
 
 // creates new stack
 STACK* create_stack(){
@@ -43,6 +38,13 @@ STACK* pop_stack(STACK* stack){
 	return new_stack;
 }
 
+// looks for declaration in current scope
+HASH_TBL *lookup_declaration(STACK* stack, char *s){
+
+	HASH_TBL* entry = lookup(stack->hashtab, s);
+
+	return entry;
+}
 
 // looks for entry in all stacks
 HASH_TBL *lookup_stack( STACK* stack, char *s){
@@ -62,7 +64,7 @@ HASH_TBL *lookup_stack( STACK* stack, char *s){
 }
 
 // adds entry to hashtable on top of stack
-void add_entry(STACK* stack, char *name, void *content){
+void add_entry(STACK* stack, char *name, CONTEUDO *content){
 	add_to_table(stack->hashtab, name, content);
 }
 
@@ -75,8 +77,14 @@ void print_stack(STACK* stack){
 		printf("\n stack %d \n", ++j);
 
 		for(int i = 0; i < HASHSIZE; i++){
-			if(stack->hashtab[i] != NULL)
+			if(stack->hashtab[i] != NULL){
 				printf("item nome: %s \n", stack->hashtab[i]->name);
+				CONTEUDO *content = stack->hashtab[i]->content;
+				if( content != NULL){
+					printf("linha: %d \nnatureza: %d \ntipo: %d \ntamanho: %d \n\n",  content->linha, content->natureza, content->tipo, content->tamanho);
+				}
+			}
+				
 		}
 
 		stack = stack->next;
@@ -84,6 +92,9 @@ void print_stack(STACK* stack){
 	}while(stack != NULL);
 
 }
+
+
+
 /*
 int main(){
 

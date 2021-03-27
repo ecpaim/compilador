@@ -1,8 +1,11 @@
 %{
-#include<stdio.h>
-#include <stdlib.h>
+#include "stack.h"
 #include "tree.h"
 #include "token_info.h"
+
+#include<stdio.h>
+#include <stdlib.h>
+
 #define YYERROR_VERBOSE 1
 
 extern void *arvore;
@@ -10,7 +13,16 @@ extern void *arvore;
 extern int yylineno;
 int yylex(void);
 int yyerror (char const *s);
+
+STACK* hash_stack;
+
 %}
+
+%initial-action
+{
+	hash_stack = create_stack();
+};
+
 
 %union{
 	TOKEN_INFO *valor_lexico;
@@ -74,7 +86,7 @@ int yyerror (char const *s);
 %start programa_star
 %%
 programa_star: 
-    programa { arvore = $1; }
+    programa { arvore = $1; print_stack(hash_stack); pop_stack(hash_stack); }
 ;
 programa: 
     def programa { $$ = join_nodes($1, $2); }
@@ -86,11 +98,11 @@ def:
 ;
 
 tipo: 
-	TK_PR_INT { $$ = NULL; }
-	| TK_PR_FLOAT { $$ = NULL; }
-	| TK_PR_BOOL { $$ = NULL; }
-	| TK_PR_CHAR { $$ = NULL; }
-	| TK_PR_STRING { $$ = NULL; }
+	TK_PR_INT { $$ = cria_nodo("0", NULL); /* enum C_INT has value 0 */}
+	| TK_PR_FLOAT { $$ = cria_nodo("1", NULL); /* C_FLOAT has value 1 */}
+	| TK_PR_BOOL { $$ = cria_nodo("2", NULL); }
+	| TK_PR_CHAR { $$ = cria_nodo("3", NULL); }
+	| TK_PR_STRING { $$ = cria_nodo("4", NULL); }
 ; 
 literais : 
 	TK_LIT_CHAR { char str[16]; sprintf(str,"%c",$1->valor.c); $$ = cria_nodo(str,$1); }
@@ -102,17 +114,17 @@ literais :
 ;
 
 global: 
-	TK_PR_STATIC tipo lista ';' { $$ = $3; }
-	| tipo lista ';' { $$ = $2;  }
+	TK_PR_STATIC tipo lista ';' { int r = add_var(hash_stack, "global_static", $2, $3, NULL, NULL); if(r != 0) return r;}
+	| tipo lista ';' { int r = add_var(hash_stack, "global_non_static", $1, $2, NULL, NULL);  if(r != 0) return r;  }
 ;
 lista: 
-	varglobal ',' lista { $$ = NULL; }
-	| varglobal { $$ = NULL; }
+	varglobal ',' lista { $$ = join_nodes($1, $3); }
+	| varglobal { $$ = $1; }
 ;
 varglobal: 
-	TK_IDENTIFICADOR { free_token($1); $$ = NULL;}
-	| TK_IDENTIFICADOR '[' TK_LIT_INT ']' { free_token($1); free_token($3); $$ = NULL; }
-	| TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']' { free_token($1); free_token($4); $$ = NULL; }
+	TK_IDENTIFICADOR { $$ = cria_nodo($1->valor.s,$1); $$->tam = -1; }
+	| TK_IDENTIFICADOR '[' TK_LIT_INT ']' { $$ = cria_nodo($1->valor.s,$1); $$->tam = $3->valor.i;  }
+	| TK_IDENTIFICADOR '[' '+' TK_LIT_INT ']' { $$ = cria_nodo($1->valor.s,$1); $$->tam = $4->valor.i; }
 ;
 
 funcao : 
@@ -148,7 +160,7 @@ func_prim_arg :
 ; 
 
 func_block :
-    '{' func_commands '}' { $$ = $2; }
+    '{' { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_commands '}' { $$ = $3; printf("tirando tabela da pilha... \n"); hash_stack = pop_stack(hash_stack); }
     | '{''}' { $$ = NULL; }
 ;
 
@@ -179,7 +191,7 @@ lista_decl_var :
     TK_IDENTIFICADOR inic_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  }
-    | TK_IDENTIFICADOR { free_token($1); $$ = NULL; }
+    | TK_IDENTIFICADOR { printf("reconheceu %s \n", $1->valor.s); free_token($1); $$ = NULL; }
     | TK_IDENTIFICADOR inic_decl_var ',' lista_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  
@@ -265,11 +277,13 @@ cmd_iter :
         add_child($$, $5);
         add_child($$, $7);
         add_child($$, $9);
+	printf("reconheceu for\n");
     }
     | TK_PR_WHILE '(' exp ')' TK_PR_DO func_block {
         $$ = cria_nodo("while", NULL);
         add_child($$, $3);
         add_child($$, $6);
+	printf("reconheceu while\n");
     }
 ;
 unary_op: 
@@ -290,6 +304,8 @@ binary_op:
     | '|' {  $$ = cria_nodo("|", NULL); }
     | '&' {  $$ = cria_nodo("&", NULL); }
     | '^' {  $$ = cria_nodo("^", NULL); }
+    | '<' {  $$ = cria_nodo("<", NULL); }
+    | '>' {  $$ = cria_nodo(">", NULL); }
     | TK_OC_LE { $$ = cria_nodo("<=",NULL); }
     | TK_OC_GE { $$ = cria_nodo(">=",NULL); }
     | TK_OC_EQ { $$ = cria_nodo("==",NULL); }

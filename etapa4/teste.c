@@ -1,14 +1,22 @@
 int var_global;
+char v1,v2[5],v3;
+
 int main(){
-    if(true){
-        a = 5;
+    while(true) do {
+
+        int var1;
+
+        for ( i = 1 : i < 5 : i = 1 ) {
+            int var2;
+        }
     }
-	a = 1 + 3 + 4 + 5;
-	a = (1 + 3) + ( 4 + 5);
-}
-int var_global2;
-int func2(){
-    int var_local;
 }
 
-true
+int var_global2;
+bool v2;
+
+int func2(){
+    int var_local;
+    var_local = 1;
+}
+

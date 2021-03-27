@@ -6,9 +6,9 @@
 void free_token(TOKEN_INFO* tk){
 	if(tk != NULL){
 		if(tk->tipo != LIT || tk->tipo_lit == STRING){
-            free(tk->valor.s);
-        }
-        free(tk);
+		    free(tk->valor.s);
+		}
+        	free(tk);
 	}
 	return;
 }

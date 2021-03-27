@@ -1,20 +1,83 @@
 #include "tree.h"
 #include "token_info.h"
-#include "stack.c"
+#include "stack.h"
+#include "errors.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-enum type = {INT, FLOAT, CHAR, BOOLEAN, STRING, UNDEFINED}; // nodos de controle de fluxo como while têm tipo undefined
 
-node_t* cria_nodo_tipado(char *type, node_t* nodo1, node_t* nodo2, TOKEN_INFO *valor1, TOKEN_INFO *valor2){
-    node_t* nodo; // isso é equivalente ao $$ no parser
+enum type{N_INT, N_FLOAT,N_BOOLEAN, N_CHAR, N_STRING, N_UNDEFINED}; // nodos de controle de fluxo como while têm tipo undefined
 
-    switch(type){
-        // TODO
-    }
+// isso só serve pra não escrever muito código no parser
+int add_var(STACK* stack, char *type, node_t* nodo1, node_t* nodo2, TOKEN_INFO *valor1, TOKEN_INFO *valor2){
+    node_t* nodo; 
+    node_t* aux; 
+    HASH_TBL *entry;
+    
+    	if( ( strcmp(type, "global_static") == 0) || ( strcmp(type, "global_non_static") == 0 ) ){
 
-    return nodo;
+		int tipo = atoi(nodo1->label);
+		libera_nodo(nodo1);
+		
+		nodo = nodo2;
+		do{
+			entry = lookup_declaration(stack, nodo->label);
+			if(entry != NULL){
+				printf("ERRO: Redeclaracao de variavel %s na linha %d ja declarada na linha %d",nodo->label,nodo->value->linha, entry->content->linha);
+				
+				return ERR_DECLARED;
+			} else {
+				CONTEUDO *conteudo = malloc(sizeof(CONTEUDO));	
+
+				conteudo->linha = nodo->value->linha;
+				if( nodo->tam == -1 ){
+					conteudo->natureza = 1; // 1 = C_VAR				
+				} else {
+					conteudo->natureza = 3; // 3 = C_VET
+				}
+				conteudo->tipo = tipo;
+				if( strcmp(type, "global_static") == 0 ){
+					conteudo->static_var = 1;				
+				} else {
+					conteudo->static_var = 0;
+				}
+				conteudo->const_var = 0;
+				int vec_tam = 1;
+				if(nodo->tam != -1) vec_tam = nodo->tam;
+				switch(tipo){
+					case N_INT:
+						conteudo->tamanho = 4 * vec_tam; // em bytes
+						break;
+					case N_FLOAT:
+						conteudo->tamanho = 8 * vec_tam;
+						break;
+					case N_BOOLEAN:
+						conteudo->tamanho = 1 * vec_tam;
+						break;
+					case N_CHAR:
+						conteudo->tamanho = 1 * vec_tam;
+						break;
+					case N_STRING:
+						conteudo->tamanho = 1 * vec_tam;
+						break;
+				}
+				conteudo->argumentos = NULL;
+				conteudo->valor = nodo->value;
+				
+				add_entry(stack, nodo->label , conteudo); // faz stdup no label
+			}
+			aux = nodo; 
+			nodo = nodo->next_cmd;
+			free(aux->label);
+			free(aux);
+			
+		}while(nodo != NULL);
+		
+	} // aqui da pra colocar outros ifs pra outras regras do parser.y
+    
+
+    return 0;
 }
 
 node_t* cria_nodo(char *label, TOKEN_INFO *valor){
@@ -27,6 +90,15 @@ node_t* cria_nodo(char *label, TOKEN_INFO *valor){
     nodo->next_cmd = NULL;
     
     return nodo;
+}
+
+void libera_nodo(node_t* nodo){
+
+	free(nodo->label);
+	free_token(nodo->value);
+	free(nodo);
+	
+	return;
 }
 
 void exporta(node_t* tree){
