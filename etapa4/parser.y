@@ -2,6 +2,7 @@
 #include "stack.h"
 #include "tree.h"
 #include "token_info.h"
+#include "symbol_table.h"
 
 #include<stdio.h>
 #include <stdlib.h>
@@ -79,8 +80,8 @@ STACK* hash_stack;
 %type<no> func_header func_params func_prim_arg func_block func_commands
 %type<no> comando cmd_decl_var lista_decl_var inic_decl_var cmd_attrib cmd_io cmd_func_call cmd_func_call_args 
 %type<no> cmd_shift shift_op cmd_simple_keyword cmd_fluxo cmd_fluxo_else cmd_iter
-%type<no> unary_op binary_op
-%type<no> exp exp_unit exp_value
+%type<no> unary_op low_precedence high_precedence
+%type<no> exp exp_high exp_unit exp_value
 
 
 %start programa_star
@@ -131,7 +132,7 @@ funcao :
 	func_header func_block { 
         add_child($1, $2); 
         $$ = $1; 
-        printf("reconheceu funcao \n");
+        printf("rreconheceu funcao \n");
         }
 ;
 func_header : 
@@ -139,6 +140,7 @@ func_header :
         char str[16]; 
         sprintf(str,"%s",$2->valor.s); 
         $$ = cria_nodo(str, $2);
+        add_function_to_table(hash_stack, $2, $1, 0, $3);
       }
     | TK_PR_STATIC tipo TK_IDENTIFICADOR func_params { 
         char str[16]; 
@@ -148,20 +150,34 @@ func_header :
 ;
 
 func_params : 
-    '(' func_prim_arg ')' { $$ = NULL; }
+    '(' func_prim_arg ')' { $$ = $2; }
     | '('')' { $$ = NULL; }
 ; 
 
 func_prim_arg : 
-    tipo TK_IDENTIFICADOR ',' func_prim_arg { free_token($2); }
-    | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { free_token($3); }
-    | tipo TK_IDENTIFICADOR { free_token($2); }
-    | TK_PR_CONST tipo TK_IDENTIFICADOR { free_token($3); }
+    tipo TK_IDENTIFICADOR ',' func_prim_arg { 
+        node_t* aux_node = cria_nodo($2->valor.s, $2);
+        add_to_table($2, $1, 0);
+        $$ = join_nodes(aux_node, $4); 
+     }
+    | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { 
+        node_t* aux_node = cria_nodo($3->valor.s, $3);
+        add_to_table($3, $2, 1);
+        $$ = join_nodes(aux_node, $5);
+     }
+    | tipo TK_IDENTIFICADOR { 
+        add_to_table($2, $1, 0);
+        $$ = cria_nodo($2->valor.s, $2);
+     }
+    | TK_PR_CONST tipo TK_IDENTIFICADOR { 
+        add_to_table($3, $2, 1);
+        $$ = cria_nodo($3->valor.s, $3);
+     }
 ; 
 
 func_block :
-    '{' { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_commands '}' { $$ = $3; printf("tirando tabela da pilha... \n"); hash_stack = pop_stack(hash_stack); }
-    | '{''}' { $$ = NULL; }
+    '{' func_commands '}' { $$ = $3; printf("tirando tabela da pilha... \n"); hash_stack = pop_stack(hash_stack); }
+    | '{''}' { $$ = NULL; hash_stack = pop_stack; } // se eu tenho for(a=1;a<10;a++){} eu criei tabela e preciso tirar ela dps
 ;
 
 func_commands : 
@@ -191,7 +207,7 @@ lista_decl_var :
     TK_IDENTIFICADOR inic_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  }
-    | TK_IDENTIFICADOR { printf("reconheceu %s \n", $1->valor.s); free_token($1); $$ = NULL; }
+    | TK_IDENTIFICADOR { free_token($1); $$ = NULL; }
     | TK_IDENTIFICADOR inic_decl_var ',' lista_decl_var { $$ = cria_nodo("<=",NULL); 
         char str2[16]; sprintf(str2,"%s",$1->valor.s); node_t* aux = cria_nodo(str2,$1);
          add_child($$, aux); add_child($$, $2);  
@@ -215,13 +231,32 @@ cmd_attrib :
 ;
 
 cmd_io : 
-    TK_PR_INPUT TK_IDENTIFICADOR { $$ = cria_nodo("input", NULL); 
+    TK_PR_INPUT TK_IDENTIFICADOR { 
+        $$ = cria_nodo("input", NULL); 
         char str2[16]; sprintf(str2,"%s",$2->valor.s); node_t* aux = cria_nodo(str2,$2);
-        add_child($$,aux); }
-    | TK_PR_OUTPUT TK_IDENTIFICADOR { $$ = cria_nodo("output", NULL); 
+        add_child($$,aux); 
+        int r = verify_type_io(hash_stack, $2, "input", 0);
+        if (r != 0) {
+            return r;
+        }
+    }
+    | TK_PR_OUTPUT TK_IDENTIFICADOR { 
+        $$ = cria_nodo("output", NULL); 
         char str2[16]; sprintf(str2,"%s",$2->valor.s); node_t* aux = cria_nodo(str2,$2);
-        add_child($$,aux); }
-    | TK_PR_OUTPUT literais { $$ = cria_nodo("output", NULL); add_child($$,$2); }
+        add_child($$,aux);
+        int r = verify_type_io(hash_stack, $2, "output", 0);
+        if (r != 0) {
+            return r;
+        } 
+    }
+    | TK_PR_OUTPUT literais { 
+        $$ = cria_nodo("output", NULL); 
+        add_child($$,$2);
+        int r = verify_type_io(hash_stack, $2->value, "output", 1);
+        if (r != 0) {
+            return r;
+        } 
+    }
 ;
 
 cmd_func_call : 
@@ -295,10 +330,13 @@ unary_op:
     | '?' { $$ = cria_nodo("?", NULL); }
     | '#' { $$ = cria_nodo("#", NULL); }
 ;
-binary_op: 
+
+low_precedence:
     '+' { $$ = cria_nodo("+", NULL); }
     | '-' {  $$ = cria_nodo("-", NULL); }
-    | '*' {  $$ = cria_nodo("*", NULL); }
+;
+high_precedence:
+     '*' {  $$ = cria_nodo("*", NULL); }
     | '/' {  $$ = cria_nodo("/", NULL); }
     | '%' {  $$ = cria_nodo("%", NULL); }
     | '|' {  $$ = cria_nodo("|", NULL); }
@@ -315,12 +353,19 @@ binary_op:
     | TK_OC_SR { $$ = cria_nodo(">>",NULL); }
     | TK_OC_SL { $$ = cria_nodo("<<",NULL); }
 ;
-exp : 
+
+exp:
     '(' exp ')' { $$ = $2; }
-    | exp binary_op exp_unit { add_child($2,$1); add_child($2,$3); $$ = $2;  }
-    | exp binary_op '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2;  }
+    | exp low_precedence exp_high { add_child($2,$1); add_child($2,$3); $$ = $2;  }
+    | exp  low_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2;  }
     | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", NULL); add_child($$,$1); add_child($$,$3); add_child($$,$5); }
     | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", NULL); add_child($$,$1); add_child($$,$3); add_child($$,$6); }
+    | exp_high { $$ = $1; }
+;
+exp_high:
+     exp_high high_precedence exp_unit { add_child($2,$1); add_child($2,$3); $$ = $2;  }
+    | exp_high high_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2;  }
+    | '(' exp ')' high_precedence exp_unit { add_child($4,$2); add_child($4,$5); $$ = $4;  }
     | exp_unit { $$ = $1; }
 ;
 exp_unit: 

@@ -10,7 +10,6 @@ typedef struct stack {
 
 STACK* create_stack();
 
-
 // creates another hashtable and puts on top of stack
 STACK* put_stack(STACK* stack);
 
@@ -28,5 +27,25 @@ void add_entry(STACK* stack, char *name, CONTEUDO *content);
 
 // prints content of all hashtables
 void print_stack(STACK* stack);
+
+
+
+typedef struct linked_list {
+	char *label;
+	int type;
+	struct linked_list* next;
+} LIST;
+
+// creates the list
+LIST* create_list();
+
+// print elements inside the list
+void print_list(LIST *list);
+
+// add element at the end of the list
+void add_to_list(LIST *list, char* element, int type);
+
+// free the list
+void free_list(LIST *list);
 
 #endif

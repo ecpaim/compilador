@@ -54,8 +54,7 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				p_linha = malloc(sizeof(p)-1);
 				memcpy(p_linha, p+1,sizeof(p_linha));
 				free(p);
-
-				p_linha[strlen(p_linha)-1] = 0; // removes last "
+				p_linha[strlen(p_linha)] = 0; // removes last "
 				new_token->valor.s = p_linha;
 				break;	
 			default:
