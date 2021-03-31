@@ -1,6 +1,7 @@
 #include "stack.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 
 // creates new stack
@@ -50,7 +51,6 @@ HASH_TBL *lookup_declaration(STACK* stack, char *s){
 HASH_TBL *lookup_stack( STACK* stack, char *s){
 
 	HASH_TBL* entry = NULL;
-
 	do{
 		entry = lookup(stack->hashtab, s);
 
@@ -93,6 +93,46 @@ void print_stack(STACK* stack){
 
 }
 
+// creates the list
+LIST* create_list(){
+	LIST* list = malloc(sizeof(LIST));
+	list->next = NULL;
+	list->label = NULL;
+	list->type = 0;
+	return list;
+}
+
+// print elements inside the list
+void print_list(LIST *list){
+	LIST* aux = list;
+	int i=0;
+	while(aux != NULL){
+		printf("in position %d = element %s of type %d", i, aux->label, aux->type);
+		aux = list->next;
+		i++;
+	}
+}
+
+// add element at the end of the list
+void add_to_list(LIST *list, char* element, int type) {
+	LIST* new_element = malloc(sizeof(LIST));
+	new_element->label = strdup(element);
+	new_element->type = type;
+	
+	list->next = new_element;
+}
+
+// free the list
+void free_list(LIST *list) {
+	LIST* aux = list;
+	LIST* next = list;
+	while(next != NULL) {
+		free(aux->label);
+		free(aux);
+
+		next = aux->next;
+	}
+}
 
 
 /*
