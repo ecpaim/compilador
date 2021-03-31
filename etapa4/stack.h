@@ -29,13 +29,6 @@ void add_entry(STACK* stack, char *name, CONTEUDO *content);
 void print_stack(STACK* stack);
 
 
-
-typedef struct linked_list {
-	char *label;
-	int type;
-	struct linked_list* next;
-} LIST;
-
 // creates the list
 LIST* create_list();
 

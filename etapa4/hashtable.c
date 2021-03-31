@@ -66,7 +66,18 @@ void free_entry(HASH_TBL *entry)
         free(entry->name);
     }
     if (entry->content != NULL)
-    {
+    {   
+        free_token(entry->content->valor);
+
+        LIST* aux = (LIST*) entry->content->argumentos;
+        LIST* next = (LIST*) entry->content->argumentos;
+        while(next != NULL) {
+            free(aux->label);
+            free(aux);
+
+            next = aux->next;
+        }
+
         free(entry->content); // isso vai ter que ser refatorado provavelmente
     }
     if (entry != NULL)

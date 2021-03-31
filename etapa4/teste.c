@@ -4,17 +4,9 @@
 //    c = ? 5;
 // }
 
-int a;
-int foo() {
-    string a;
-    a = "diego"; 
-    {
-        int b;
-        b = 3;
-    }
-    int b;
-    b = 3;
-}
+char a;
+
 int bar(){
-    foo();
+    a = 'c' * 'd';
+    //a = ? (1 && 2 && (3 + 4));
 }

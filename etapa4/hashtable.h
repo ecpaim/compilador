@@ -17,6 +17,12 @@ typedef struct conteudo{
 
 } CONTEUDO;
 
+typedef struct linked_list {
+    char *label;
+    int type;
+    struct linked_list* next;
+} LIST;
+
 struct hash_entry
 {                           // table entry:
     struct hash_entry *next; // prox entrada

@@ -408,34 +408,34 @@ cmd_iter :
     }
 ;
 unary_op: 
-    '+'  { $$ = cria_nodo("+", NULL); }
-    | '-' { $$ = cria_nodo("-", NULL); }
-    | '!' { $$ = cria_nodo("!", NULL); }
-    | '&' { $$ = cria_nodo("&", NULL); }
-    | '*' { $$ = cria_nodo("*", NULL); }
-    | '?' { $$ = cria_nodo("?", NULL); }
-    | '#' { $$ = cria_nodo("#", NULL); }
+    '+'  { $$ = cria_nodo("+", add_token(yylineno, CHAR_ESP, "+", OC_ID_SC)); }
+    | '-' { $$ = cria_nodo("-", add_token(yylineno, CHAR_ESP, "-", OC_ID_SC)); }
+    | '!' { $$ = cria_nodo("!", add_token(yylineno, CHAR_ESP, "|", OC_ID_SC)); }
+    | '&' { $$ = cria_nodo("&", add_token(yylineno, CHAR_ESP, "&", OC_ID_SC)); }
+    | '*' { $$ = cria_nodo("*", add_token(yylineno, CHAR_ESP, "*", OC_ID_SC)); }
+    | '?' { $$ = cria_nodo("?", add_token(yylineno, CHAR_ESP, "?", OC_ID_SC)); }
+    | '#' { $$ = cria_nodo("#", add_token(yylineno, CHAR_ESP, "#", OC_ID_SC)); }
 ;
 
 low_precedence:
-    '+' { $$ = cria_nodo("+", NULL); }
-    | '-' {  $$ = cria_nodo("-", NULL); }
+    '+' { $$ = cria_nodo("+", add_token(yylineno, CHAR_ESP, "+", OC_ID_SC)); }
+    | '-' {  $$ = cria_nodo("-", add_token(yylineno, CHAR_ESP, "-", OC_ID_SC)); }
 ;
 high_precedence:
-     '*' {  $$ = cria_nodo("*", NULL); }
-    | '/' {  $$ = cria_nodo("/", NULL); }
-    | '%' {  $$ = cria_nodo("%", NULL); }
-    | '|' {  $$ = cria_nodo("|", NULL); }
-    | '&' {  $$ = cria_nodo("&", NULL); }
-    | '^' {  $$ = cria_nodo("^", NULL); }
-    | '<' {  $$ = cria_nodo("<", NULL); }
-    | '>' {  $$ = cria_nodo(">", NULL); }
-    | TK_OC_LE { $$ = cria_nodo("<=",NULL); }
-    | TK_OC_GE { $$ = cria_nodo(">=",NULL); }
-    | TK_OC_EQ { $$ = cria_nodo("==",NULL); }
-    | TK_OC_NE { $$ = cria_nodo("!=",NULL); }
-    | TK_OC_AND { $$ = cria_nodo("&&",NULL); }
-    | TK_OC_OR { $$ = cria_nodo("||",NULL); }
+     '*' {  $$ = cria_nodo("*", add_token(yylineno, CHAR_ESP, "*", OC_ID_SC)); }
+    | '/' {  $$ = cria_nodo("/", add_token(yylineno, CHAR_ESP, "/", OC_ID_SC)); }
+    | '%' {  $$ = cria_nodo("%", add_token(yylineno, CHAR_ESP, "%", OC_ID_SC)); }
+    | '|' {  $$ = cria_nodo("|", add_token(yylineno, CHAR_ESP, "|", OC_ID_SC)); }
+    | '&' {  $$ = cria_nodo("&", add_token(yylineno, CHAR_ESP, "&", OC_ID_SC)); }
+    | '^' {  $$ = cria_nodo("^", add_token(yylineno, CHAR_ESP, "^", OC_ID_SC)); }
+    | '<' {  $$ = cria_nodo("<", add_token(yylineno, CHAR_ESP, "<", OC_ID_SC)); }
+    | '>' {  $$ = cria_nodo(">", add_token(yylineno, CHAR_ESP, ">", OC_ID_SC)); }
+    | TK_OC_LE { $$ = cria_nodo("<=",add_token(yylineno, CHAR_ESP, "<=", OC_ID_SC)); }
+    | TK_OC_GE { $$ = cria_nodo(">=",add_token(yylineno, CHAR_ESP, ">=", OC_ID_SC)); }
+    | TK_OC_EQ { $$ = cria_nodo("==",add_token(yylineno, CHAR_ESP, "==", OC_ID_SC)); }
+    | TK_OC_NE { $$ = cria_nodo("!=",add_token(yylineno, CHAR_ESP, "!=", OC_ID_SC)); }
+    | TK_OC_AND { $$ = cria_nodo("&&",add_token(yylineno, CHAR_ESP, "&&", OC_ID_SC)); }
+    | TK_OC_OR { $$ = cria_nodo("||",add_token(yylineno, CHAR_ESP, "||", OC_ID_SC)); }
 ;
 
 exp:

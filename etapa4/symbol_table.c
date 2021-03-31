@@ -198,15 +198,15 @@ int binary_type_inference(node_t *parent, node_t *left, node_t *right){
 
     } else if( (tipoL == N_STRING && tipoR != N_STRING) || (tipoL != N_STRING && tipoR == N_STRING) ){
 
-       
-        printf("ERROR: In line %d, String cannot be converted to other data types \n", left->value->linha);
+      
+        printf("ERROR: Operation %s in line %d, String cannot be converted to other data types. \n", parent->label, parent->value->linha);
             
         return ERR_STRING_TO_X;
 
     } else if( (tipoL == N_CHAR && tipoR != N_CHAR) || (tipoL != N_CHAR && tipoR == N_CHAR) ){
 
        
-        printf("ERROR: In line %d, Char cannot be converted to other data types \n", left->value->linha);
+        printf("ERROR: Operation %s in line %d, Char cannot be converted to other data types. \n", parent->label, parent->value->linha);
             
         return ERR_CHAR_TO_X;
 
@@ -217,17 +217,21 @@ int binary_type_inference(node_t *parent, node_t *left, node_t *right){
 
 // sets parent->tipo according to the type conversions
 int unary_type_inference(node_t *parent, node_t *son){
+    printf("\n %s \n", son->label);
+
     if ( (strcmp(parent->label, "?") == 0) || (strcmp(parent->label, "!") == 0) ){
+
         if(son->tipo == N_CHAR){
-            printf("ERROR: In line %d, Char cannot be converted to boolean \n", son->value->linha);
+            printf("ERROR: Operation %s in line %d, Char cannot be converted to boolean \n",parent->label, parent->value->linha);
             
             return ERR_CHAR_TO_X;
         } else if(son->tipo == N_STRING){
-            printf("ERROR: In line %d, String cannot be converted to boolean \n", son->value->linha);
+            printf("ERROR: Operation %s in line %d, String cannot be converted to boolean \n",parent->label, parent->value->linha);
             
             return ERR_STRING_TO_X;
         }
     }
+
     parent->tipo = son->tipo;
 
     return 0;
@@ -266,6 +270,8 @@ int verify_type_io(STACK *stack, TOKEN_INFO *token, char *type, int is_lit)
 int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node, int static_func, node_t *func_params)
 { // faz sentido receber token_info? faz, eu recebo ali no add_var
     int tipo = atoi(node->label);
+    libera_nodo(node);
+
     printf("TYPE OF RETURN %d\n", tipo);
     if (tipo == N_STRING) {
         printf("ERR: Function %s cannot return string\n", indentificador->valor.s);
@@ -281,11 +287,18 @@ int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node
     conteudo->linha = indentificador->linha;
     conteudo->valor = NULL; // qual o valor de uma função? creio que seja o token_value do identificador
     conteudo->tamanho = 0;  // qual o tamanho da função? o tamanho do tipo de retorno eu acho, mas é provavelmente desnecessario
+
+    /*
+    // 
+
     node_t *param = func_params;
     LIST *params_list = create_list();
 
+    conteudo->argumentos = (void*) params_list;
+   
     while (param != NULL)
     {
+
         int param_type = param->tipo;
         if (param_type == N_STRING)
             return ERR_FUNCTION_STRING; // argumento de função não pode ser string
@@ -293,6 +306,9 @@ int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node
         param = param->next_cmd;
         // eles ja são adicionados na tabela no parser.y
     }
+
+    */
+    
     add_entry(stack, indentificador->valor.s, conteudo);
     
     return 0;
