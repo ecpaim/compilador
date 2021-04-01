@@ -77,7 +77,7 @@ int add_var(STACK *stack, char *type, node_t *nodo1, node_t *nodo2, TOKEN_INFO *
 
         } while (nodo != NULL);
 
-    } // aqui da pra colocar outros ifs pra outras regras do parser.y
+    } 
 
     return 0;
 }
@@ -312,7 +312,7 @@ int verify_type_io(STACK *stack, TOKEN_INFO *token, char *type, int is_lit)
 
 // function to add function declaration to hash table. Assumes the top of the stack is the scope of the function. identificador: name of the function, node: tipo on parser
 int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node, int static_func, node_t *func_params)
-{ // faz sentido receber token_info? faz, eu recebo ali no add_var
+{ 
     int tipo = atoi(node->label);
     libera_nodo(node);
 
@@ -408,7 +408,7 @@ int verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *va
 
                 return ERR_STRING_TO_X;
 
-            } // foda que não existe o erro ERR_X_TO_CHAR mas pela especificação tbm nao pode fazer tipo char var = 1; mas ele n definiu um erro
+            } 
         }
         content->argumentos = NULL;
         
@@ -541,7 +541,7 @@ int cmd_attrib(STACK *stack, TOKEN_INFO *ident, node_t *exp_value, int is_vector
     return 0;
 }
 
-// check if a for loop is valid
+// check if a for loop is valid (not used yet)
 int check_for_loop(STACK *stack, node_t *node)
 {
     if (node->n_child < 3)
@@ -575,7 +575,7 @@ int check_for_loop(STACK *stack, node_t *node)
     return 0;
 }
 
-// check if a while loop is valid
+// check if a while loop is valid (not used yet)
 int check_while(STACK *stack, node_t *node)
 {
     node_t *while_exp = node->children[0];
