@@ -60,8 +60,9 @@ int add_var(STACK *stack, char *type, node_t *nodo1, node_t *nodo2, TOKEN_INFO *
                 conteudo->argumentos = NULL;
                 conteudo->valor = nodo->value;
 
-                if(conteudo->natureza == 3 && conteudo->tipo == 4){
-                    
+                if (conteudo->natureza == 3 && conteudo->tipo == 4)
+                {
+
                     printf("ERROR: Cannot declare a string vector! Variable %s in line %d \n", nodo->label, nodo->value->linha);
 
                     return ERR_STRING_VECTOR;
@@ -82,68 +83,84 @@ int add_var(STACK *stack, char *type, node_t *nodo1, node_t *nodo2, TOKEN_INFO *
 }
 
 // checks if an identifier in an expression is a declared variable and sets node->tipo to its correct type
-int verify_exp_ident(STACK *stack, char *type, node_t *nodo){
+int verify_exp_ident(STACK *stack, char *type, node_t *nodo)
+{
 
-    HASH_TBL *entry = lookup_declaration(stack, nodo->label);
-    
-    if( entry == NULL){
-        if (strcmp(type, "var") == 0){
+    HASH_TBL *entry = lookup_stack(stack, nodo->label);
+
+    if (entry == NULL)
+    {
+        if (strcmp(type, "var") == 0)
+        {
             printf("ERROR: Variable %s undeclared in line %d \n", nodo->label, nodo->value->linha);
-        } else if (strcmp(type, "vector") == 0) {
+        }
+        else if (strcmp(type, "vector") == 0)
+        {
             printf("ERROR: Vector %s undeclared in line %d \n", nodo->label, nodo->value->linha);
-        } else if (strcmp(type, "function") == 0) {
+        }
+        else if (strcmp(type, "function") == 0)
+        {
             printf("ERROR: Function %s undeclared in line %d \n", nodo->label, nodo->value->linha);
         }
-           
+
         return ERR_UNDECLARED;
     }
-    else {
+    else
+    {
 
-        if (strcmp(type, "var") == 0){
-                 
-            if( entry->content->natureza == C_FUNC){
+        if (strcmp(type, "var") == 0)
+        {
+
+            if (entry->content->natureza == C_FUNC)
+            {
 
                 printf("ERROR: Function %s is used as variable in line %d \n", nodo->label, nodo->value->linha);
-            
-                return ERR_FUNCTION;
 
-            } else if( entry->content->natureza == C_VET){
+                return ERR_FUNCTION;
+            }
+            else if (entry->content->natureza == C_VET)
+            {
 
                 printf("ERROR:Vector %s is used as variable in line %d \n", nodo->label, nodo->value->linha);
-            
+
                 return ERR_VECTOR;
             }
-            
-        } else if (strcmp(type, "vector") == 0){
+        }
+        else if (strcmp(type, "vector") == 0)
+        {
 
-            if( entry->content->natureza == C_FUNC){
+            if (entry->content->natureza == C_FUNC)
+            {
 
                 printf("ERROR: Function %s is used as vector in line %d \n", nodo->label, nodo->value->linha);
-            
-                return ERR_FUNCTION;
 
-            } else if( entry->content->natureza == C_VAR){
+                return ERR_FUNCTION;
+            }
+            else if (entry->content->natureza == C_VAR)
+            {
 
                 printf("ERROR:Variable %s is used as vector in line %d \n", nodo->label, nodo->value->linha);
-            
+
                 return ERR_VARIABLE;
             }
+        }
+        else if (strcmp(type, "function") == 0)
+        {
 
-        } else if (strcmp(type, "function") == 0){
-
-            if( entry->content->natureza == C_VET){
+            if (entry->content->natureza == C_VET)
+            {
 
                 printf("ERROR: Vector %s is used as function in line %d \n", nodo->label, nodo->value->linha);
-            
-                return ERR_VECTOR;
 
-            } else if( entry->content->natureza == C_VAR){
+                return ERR_VECTOR;
+            }
+            else if (entry->content->natureza == C_VAR)
+            {
 
                 printf("ERROR: Variable %s is used as function in line %d \n", nodo->label, nodo->value->linha);
-            
+
                 return ERR_VARIABLE;
             }
-
         }
 
         nodo->tipo = entry->content->tipo;
@@ -153,7 +170,8 @@ int verify_exp_ident(STACK *stack, char *type, node_t *nodo){
 }
 
 // sets parent->tipo according to the type conversions
-int binary_type_inference(node_t *parent, node_t *left, node_t *right){
+int binary_type_inference(node_t *parent, node_t *left, node_t *right)
+{
 
     int tipoL = left->tipo;
     int tipoR = right->tipo;
@@ -164,70 +182,82 @@ int binary_type_inference(node_t *parent, node_t *left, node_t *right){
     // bool float = float
     // bool int = int
 
-    if( tipoL == N_INT && tipoR == N_INT ){
+    if (tipoL == N_INT && tipoR == N_INT)
+    {
 
         parent->tipo = N_INT;
-        
-    } else if( tipoL == N_FLOAT && tipoR == N_FLOAT ){
+    }
+    else if (tipoL == N_FLOAT && tipoR == N_FLOAT)
+    {
 
         parent->tipo = N_FLOAT;
-
-    } else if( tipoL == N_BOOLEAN && tipoR == N_BOOLEAN ){
+    }
+    else if (tipoL == N_BOOLEAN && tipoR == N_BOOLEAN)
+    {
 
         parent->tipo = N_BOOLEAN;
-
-    } else if( tipoL == N_CHAR && tipoR == N_CHAR ){
+    }
+    else if (tipoL == N_CHAR && tipoR == N_CHAR)
+    {
 
         parent->tipo = N_CHAR;
-
-    } else if( tipoL == N_STRING && tipoR == N_STRING ){
+    }
+    else if (tipoL == N_STRING && tipoR == N_STRING)
+    {
 
         parent->tipo = N_STRING;
-
-    } else if( (tipoL == N_FLOAT && tipoR == N_INT) || (tipoL == N_INT && tipoR == N_FLOAT) ){
-
-        parent->tipo = N_FLOAT;
-
-    } else if( (tipoL == N_FLOAT && tipoR == N_BOOLEAN) || (tipoL == N_BOOLEAN && tipoR == N_FLOAT) ){
+    }
+    else if ((tipoL == N_FLOAT && tipoR == N_INT) || (tipoL == N_INT && tipoR == N_FLOAT))
+    {
 
         parent->tipo = N_FLOAT;
+    }
+    else if ((tipoL == N_FLOAT && tipoR == N_BOOLEAN) || (tipoL == N_BOOLEAN && tipoR == N_FLOAT))
+    {
 
-    } else if( (tipoL == N_BOOLEAN && tipoR == N_INT) || (tipoL == N_INT && tipoR == N_BOOLEAN) ){
+        parent->tipo = N_FLOAT;
+    }
+    else if ((tipoL == N_BOOLEAN && tipoR == N_INT) || (tipoL == N_INT && tipoR == N_BOOLEAN))
+    {
 
         parent->tipo = N_INT;
+    }
+    else if ((tipoL == N_STRING && tipoR != N_STRING) || (tipoL != N_STRING && tipoR == N_STRING))
+    {
 
-    } else if( (tipoL == N_STRING && tipoR != N_STRING) || (tipoL != N_STRING && tipoR == N_STRING) ){
-
-      
         printf("ERROR: Operation %s in line %d, String cannot be converted to other data types. \n", parent->label, parent->value->linha);
-            
+
         return ERR_STRING_TO_X;
+    }
+    else if ((tipoL == N_CHAR && tipoR != N_CHAR) || (tipoL != N_CHAR && tipoR == N_CHAR))
+    {
 
-    } else if( (tipoL == N_CHAR && tipoR != N_CHAR) || (tipoL != N_CHAR && tipoR == N_CHAR) ){
-
-       
         printf("ERROR: Operation %s in line %d, Char cannot be converted to other data types. \n", parent->label, parent->value->linha);
-            
-        return ERR_CHAR_TO_X;
 
+        return ERR_CHAR_TO_X;
     }
 
     return 0;
 }
 
 // sets parent->tipo according to the type conversions
-int unary_type_inference(node_t *parent, node_t *son){
+int unary_type_inference(node_t *parent, node_t *son)
+{
     printf("\n %s \n", son->label);
 
-    if ( (strcmp(parent->label, "?") == 0) || (strcmp(parent->label, "!") == 0) ){
+    if ((strcmp(parent->label, "?") == 0) || (strcmp(parent->label, "!") == 0))
+    {
 
-        if(son->tipo == N_CHAR){
-            printf("ERROR: Operation %s in line %d, Char cannot be converted to boolean \n",parent->label, parent->value->linha);
-            
+        if (son->tipo == N_CHAR)
+        {
+            printf("ERROR: Operation %s in line %d, Char cannot be converted to boolean \n", parent->label, parent->value->linha);
+
             return ERR_CHAR_TO_X;
-        } else if(son->tipo == N_STRING){
-            printf("ERROR: Operation %s in line %d, String cannot be converted to boolean \n",parent->label, parent->value->linha);
-            
+        }
+        else if (son->tipo == N_STRING)
+        {
+            printf("ERROR: Operation %s in line %d, String cannot be converted to boolean \n", parent->label, parent->value->linha);
+
             return ERR_STRING_TO_X;
         }
     }
@@ -244,8 +274,9 @@ int verify_type_io(STACK *stack, TOKEN_INFO *token, char *type, int is_lit)
     {
 
         HASH_TBL *entry = lookup_stack(stack, token->valor.s);
-        if (entry == NULL){
-            printf("ERR: Undeclared identifier %s on line %d.\n", token->valor.s ,token->linha);
+        if (entry == NULL)
+        {
+            printf("ERR: Undeclared identifier %s on line %d.\n", token->valor.s, token->linha);
             return ERR_UNDECLARED;
         }
         if (entry->content->tipo > 1)
@@ -272,8 +303,8 @@ int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node
     int tipo = atoi(node->label);
     libera_nodo(node);
 
-    printf("TYPE OF RETURN %d\n", tipo);
-    if (tipo == N_STRING) {
+    if (tipo == N_STRING)
+    {
         printf("ERR: Function %s cannot return string\n", indentificador->valor.s);
         return ERR_FUNCTION_STRING;
     }
@@ -285,32 +316,26 @@ int add_function_to_table(STACK *stack, TOKEN_INFO *indentificador, node_t *node
     conteudo->static_var = static_func;
     conteudo->const_var = 0;
     conteudo->linha = indentificador->linha;
-    conteudo->valor = NULL; // qual o valor de uma função? creio que seja o token_value do identificador
-    conteudo->tamanho = 0;  // qual o tamanho da função? o tamanho do tipo de retorno eu acho, mas é provavelmente desnecessario
-
-    /*
-    // 
+    conteudo->valor = NULL; 
+    conteudo->tamanho = 0;  
 
     node_t *param = func_params;
     LIST *params_list = create_list();
 
-    conteudo->argumentos = (void*) params_list;
-   
     while (param != NULL)
     {
-
-        int param_type = param->tipo;
+        HASH_TBL *entry = lookup_declaration(stack, param->label);
+        int param_type = entry->content->tipo;
         if (param_type == N_STRING)
             return ERR_FUNCTION_STRING; // argumento de função não pode ser string
-        add_to_list(params_list, param->label, param_type);
+        add_to_list(&params_list, param->label, param_type);
         param = param->next_cmd;
-        // eles ja são adicionados na tabela no parser.y
+                                // eles ja são adicionados na tabela no parser.y
     }
 
-    */
-    
-    add_entry(stack, indentificador->valor.s, conteudo);
-    
+    conteudo->argumentos = params_list;
+
+    add_entry(stack->next, indentificador->valor.s, conteudo);
     return 0;
 }
 
@@ -320,13 +345,13 @@ int verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *va
     HASH_TBL *entry = lookup_declaration(stack, ident->valor.s); // pode dar override em escopos maiores, mas não no atual
     if (entry != NULL)                                           // redeclaração de variável
     {
-        printf("ERR: Variable %s already declared on line %d\n", ident->valor.s, entry->content->linha);
+        printf("ERR: In line %d, variable %s already declared on line %d\n", ident->linha, ident->valor.s, entry->content->linha);
         return ERR_DECLARED;
     }
     else
-    {   
+    {
         int tipo = type;
-        printf("TYPE OF VAR %s IS %d\n", ident->valor.s, type);
+
         CONTEUDO *content = malloc(sizeof(CONTEUDO));
         content->tipo = tipo;
         content->natureza = C_VAR;
@@ -334,19 +359,42 @@ int verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *va
         content->const_var = is_const;
         content->linha = ident->linha;
         content->valor = ident; // verificar se isso for um identificador se isso já tá declarado
-        if(var_value != NULL && var_value->value->tipo == IDENT)
+        if (var_value != NULL && var_value->value->tipo == IDENT)
         {
-            HASH_TBL* initial_ident;
+            HASH_TBL *initial_ident;
             int used = verify_used_ident(stack, var_value->value, &initial_ident, 0, 0);
-            if( used != 0 ) {
+            if (used != 0)
+            {
                 return ERR_UNDECLARED;
             } // se to inicializando uma variavel com outra variavel precisa verificar se são tipos compativeis
-            
-        } else if (var_value != NULL && var_value->value->tipo == LIT) {
-                // VERIFICAR SE SÃO TIPOS COMPATÍVEIS
+            if (!check_type_compatibility(initial_ident->content->tipo, tipo))
+            {
+                printf("ERR: Assigning incompatible types from %s to %s on line %d.\n", print_type(initial_ident->content->tipo), print_type(tipo), ident->linha);
+                return ERR_WRONG_TYPE; // não tenho certeza se esse é o erro certo
+            };
+        }
+        else if (var_value != NULL && var_value->value->tipo == LIT)
+        {
+            if ((var_value->value->tipo_lit == CHAR && tipo != N_CHAR) || (var_value->value->tipo_lit != CHAR && tipo == N_CHAR))
+            {
+
+                printf("ERROR: In line %d, incompatible types between variable %s and literal %s", ident->linha, ident->valor.s, var_value->label);
+                return ERR_CHAR_TO_X; 
+            }
+            else if ((var_value->value->tipo_lit == STRING && tipo != N_STRING) || (var_value->value->tipo_lit != STRING && tipo == N_STRING))
+            {
+
+                printf("ERROR: In line %d, incompatible types between variable %s and literal %s", ident->linha, ident->valor.s, var_value->label);
+
+                return ERR_STRING_TO_X;
+
+            } // foda que não existe o erro ERR_X_TO_CHAR mas pela especificação tbm nao pode fazer tipo char var = 1; mas ele n definiu um erro
         }
         content->argumentos = NULL;
         content->tamanho = get_var_size_by_type(tipo);
+        if (content->tamanho == -1){
+            printf("oi");
+        }
         printf("Adding %s to stack\n", ident->valor.s);
         add_entry(stack, ident->valor.s, content);
     }
@@ -354,7 +402,7 @@ int verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *va
 }
 
 // function to test if a used identifier is declared in the scope. returns the entry in the entry field
-int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL** entry, int used_as_vector, int used_as_function)
+int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL **entry, int used_as_vector, int used_as_function)
 {
     *entry = lookup_stack(stack, ident->valor.s);
     if (*entry == NULL)
@@ -362,25 +410,33 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL** entry, int use
         printf("ERR: Identifier %s undeclared in line %d.\n", ident->valor.s, ident->linha);
         return ERR_UNDECLARED;
     }
-    if (used_as_vector) { // se é vetor e tá sendo usado como variavel
-        if((*entry)->content->natureza == C_VET)
+    if (used_as_vector)
+    { // se é vetor e tá sendo usado como variavel
+        if ((*entry)->content->natureza == C_VET)
             return 0;
-        else {
-            printf("%s in line %d is of type %d, not of type VECTOR.\n", (*entry)->name, ident->linha, (*entry)->content->natureza);
+        else
+        {
+            printf("%s in line %d is a %s, not a VECTOR.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
             return ERR_VECTOR;
         }
-    } else if (used_as_function) {
-        if((*entry)->content->natureza == C_FUNC)
+    }
+    else if (used_as_function)
+    {
+        if ((*entry)->content->natureza == C_FUNC)
             return 0;
-        else {
-            printf("%s in line %d is of type %d, not of type FUNCTION.\n", (*entry)->name,  ident->linha, (*entry)->content->natureza);
+        else
+        {
+            printf("%s in line %d is a %s, not of type FUNCTION.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
             return ERR_FUNCTION;
         }
-    } else {
-        if((*entry)->content->natureza == C_VAR)
+    }
+    else
+    {
+        if ((*entry)->content->natureza == C_VAR)
             return 0;
-        else {
-            printf("%s in line %d is of type %d, not of type VARIABLE.\n", (*entry)->name,  ident->linha, (*entry)->content->natureza);
+        else
+        {
+            printf("%s in line %d is a %s, not of type VARIABLE.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
             return ERR_VARIABLE;
         }
     }
@@ -388,25 +444,30 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL** entry, int use
 }
 
 // get the size of a ver for type
-int get_var_size_by_type(int type) {
-        switch (type) {
-        case N_INT:
-            return 4;
-        case N_FLOAT:
-            return 8;
-        case N_BOOLEAN:
-            return 1;
-        case N_CHAR:
-            return 1;
-        case N_STRING:
-            return -1; // quando for string precisa do valor pra inicializar
+int get_var_size_by_type(int type)
+{
+    switch (type)
+    {
+    case N_INT:
+        return 4;
+    case N_FLOAT:
+        return 8;
+    case N_BOOLEAN:
+        return 1;
+    case N_CHAR:
+        return 1;
+    case N_STRING:
+        return -1; // quando for string precisa do valor pra inicializar
     }
 }
 
 // add to hash table function arguments
-int add_func_arg_to_table(STACK* stack, TOKEN_INFO* identificador, node_t *type, int is_const) {
+int add_func_arg_to_table(STACK *stack, TOKEN_INFO *identificador, node_t *type, int is_const)
+{
     int tipo = atoi(type->label);
-    CONTEUDO* content = malloc(sizeof(CONTEUDO));
+    libera_nodo(type);
+
+    CONTEUDO *content = malloc(sizeof(CONTEUDO));
     content->argumentos = NULL;
     content->const_var = is_const;
     content->linha = identificador->linha;
@@ -415,9 +476,10 @@ int add_func_arg_to_table(STACK* stack, TOKEN_INFO* identificador, node_t *type,
     content->tamanho = get_var_size_by_type(tipo);
     content->tipo = tipo;
     content->valor = NULL; // argumento de função não tem valor ainda
-    if(tipo == N_STRING) {
+    if (tipo == N_STRING)
+    {
         free(content);
-        printf("ERR: function argument %s in line %d cannot be of type STRING.\n", identificador->valor.s, content->linha);
+        printf("ERR: function argument %s in line %d cannot be of type STRING.\n", identificador->valor.s, identificador->linha);
         return ERR_FUNCTION_STRING;
     }
     add_entry(stack, identificador->valor.s, content);
@@ -425,54 +487,64 @@ int add_func_arg_to_table(STACK* stack, TOKEN_INFO* identificador, node_t *type,
 }
 
 // check if an attribution is possible
-int cmd_attrib(STACK* stack, TOKEN_INFO* ident, node_t *exp_value, int is_vector) {
+int cmd_attrib(STACK *stack, TOKEN_INFO *ident, node_t *exp_value, int is_vector)
+{
     int exp_type = exp_value->tipo;
-   
-    HASH_TBL* id_entry;
-    int id_valid = verify_used_ident(stack, ident, &id_entry, is_vector, 0); 
-    if (id_valid > 0) { 
-        return id_valid;  
+
+    HASH_TBL *id_entry;
+    int id_valid = verify_used_ident(stack, ident, &id_entry, is_vector, 0);
+    if (id_valid > 0)
+    {
+        return id_valid;
     }
 
-    int var_type = id_entry->content->tipo; 
+    int var_type = id_entry->content->tipo;
     printf("type of var: %d\n", var_type);
 
-
-    if (var_type != exp_type) {
-        if(!check_type_compatibility(var_type, exp_type)){
-            printf("ERR: cannot assign type %d to type %d in line %d.\n", exp_type, var_type, ident->linha);
+    if (var_type != exp_type)
+    {
+        if (!check_type_compatibility(var_type, exp_type))
+        {
+            printf("ERR: cannot assign type %s to type %s in line %d.\n", print_type(exp_type), print_type(var_type), ident->linha);
             return ERR_WRONG_TYPE;
         }
     }
-    if (exp_type == N_STRING) {
+    if (exp_type == N_STRING)
+    {
+        printf("changing size for var %s\n", ident->valor.s);
         id_entry->content->tamanho = strlen(exp_value->value->valor.s);
     }
     return 0;
 }
 
-// check if a for loop is valid 
-int check_for_loop(STACK* stack, node_t* node) {
-    if (node->n_child < 3) {
+// check if a for loop is valid
+int check_for_loop(STACK *stack, node_t *node)
+{
+    if (node->n_child < 3)
+    {
         printf("ERR: Invalid for in line %d.\n", node->value->linha);
         return 99;
     }
-    node_t* attrib = node->children[0];
-    node_t* condition = node->children[1];
-    node_t* increment = node->children[2];
-    
+    node_t *attrib = node->children[0];
+    node_t *condition = node->children[1];
+    node_t *increment = node->children[2];
+
     // checa atribuição
     int attrib_valid = cmd_attrib(stack, attrib->children[0]->value, attrib->children[1], 0);
-    if (attrib_valid != 0){
+    if (attrib_valid != 0)
+    {
         return attrib_valid;
     }
 
     int condition_valid = condition->tipo;
-    if (condition_valid != BOOLEAN) {
+    if (condition_valid != BOOLEAN)
+    {
         printf("ERR: for condition does not evaluate to boolean in line %d.\n", node->value->linha);
     }
 
     int increment_valid = cmd_attrib(stack, increment->children[0]->value, attrib->children[1], 0);
-    if (increment_valid != 0){
+    if (increment_valid != 0)
+    {
         return increment_valid;
     }
 
@@ -480,52 +552,67 @@ int check_for_loop(STACK* stack, node_t* node) {
 }
 
 // check if a while loop is valid
-int check_while(STACK* stack, node_t* node){
-    node_t* while_exp = node->children[0];
+int check_while(STACK *stack, node_t *node)
+{
+    node_t *while_exp = node->children[0];
     int exp_type = while_exp->tipo;
-    if(exp_type != BOOLEAN){
+    if (exp_type != BOOLEAN)
+    {
         printf("ERR: while-do condition does not evaluate to boolean in line %d.\n", node->value->linha);
     }
-
 }
 
 // check if function call is correct
-int function_call(STACK *stack, node_t* node) {
+int function_call(STACK *stack, node_t *node)
+{
     // o primeiro filho é os args, pra cada arg pode ter next_cmd arg
     HASH_TBL *func_entry;
     int func_identifier_valid = verify_used_ident(stack, node->value, &func_entry, 0, 1);
-    
+
     if (func_identifier_valid != 0)
         return func_identifier_valid;
-    
-    node_t* func_called_param = node->children[0];
-    LIST* func_params = func_entry->content->argumentos;
-    while(func_params != NULL || func_called_param != NULL) {
-        if (func_called_param->value->tipo != func_params->type) {
-            printf("ERR: Wrong parameter on function call on line %d, expected %d but %s is of type %d.\n", node->value->linha, func_params->type, func_called_param->label, func_called_param->tipo);
+    node_t *func_called_param = NULL;
+    if (node != NULL && node->n_child > 0)
+        func_called_param = node->children[0];
+    LIST *func_params = func_entry->content->argumentos;
+    if (func_params == NULL)
+    {
+        printf("func params é null\n");
+    }
+    while (func_params != NULL && func_called_param != NULL)
+    {
+        if (!check_type_compatibility(func_called_param->tipo, func_params->type))
+        {
+            printf("ERR: Wrong parameter on function call on line %d, expected %s but %s is of type %s.\n", node->value->linha, print_type(func_params->type), func_called_param->label, print_type(func_called_param->tipo));
             return ERR_WRONG_TYPE_ARGS;
         }
         func_params = func_params->next;
         func_called_param = func_called_param->next_cmd;
     }
-    if (func_params == NULL && func_called_param == NULL){
+    if (func_params == NULL && func_called_param == NULL)
+    {
         return 0;
-    } else if (func_params != NULL) {
+    }
+    else if (func_params != NULL)
+    {
         printf("ERR: Too few arguments in function call on line %d.\n", node->value->linha);
         return ERR_MISSING_ARGS;
-    } else {
+    }
+    else
+    {
         printf("ERR: Too much arguments in function call on line %d.\n", node->value->linha);
         return ERR_EXCESS_ARGS;
     }
-    return 0;   
+    return 0;
 }
 
-int verify_function_return(STACK* stack, node_t *exp, int f_type) {
+int verify_function_return(STACK *stack, node_t *exp, int f_type)
+{
     int return_type = exp->tipo;
 
-
-    if(!check_type_compatibility(return_type, f_type)){
-        printf("ERR: Wrong return type, expected %d but the return is of type %d.\n", f_type, return_type);
+    if (!check_type_compatibility(return_type, f_type))
+    {
+        printf("ERR: Wrong return type, expected %s but the return is of type %s.\n", print_type(f_type), print_type(return_type));
         return ERR_WRONG_PAR_RETURN;
     }
 
@@ -533,14 +620,55 @@ int verify_function_return(STACK* stack, node_t *exp, int f_type) {
 }
 
 // check if two types are compatible
-int check_type_compatibility(int type1, int type2) {
-// N_INT, N_FLOAT,N_BOOLEAN, N_CHAR, N_STRING, N_UNDEFINED
-    if(type1 < 3) {
-        if(type2 < 3)
+int check_type_compatibility(int type1, int type2)
+{
+    // N_INT, N_FLOAT,N_BOOLEAN, N_CHAR, N_STRING, N_UNDEFINED
+    if (type1 < 3)
+    {
+        if (type2 < 3)
             return 1;
-    } else if (type1 == N_STRING && type2 == N_STRING)
+    }
+    else if (type1 == N_STRING && type2 == N_STRING)
         return 1;
     else if (type1 == N_CHAR && type2 == N_CHAR)
         return 1;
     return 0;
+}
+
+char *print_type(int type)
+{
+    switch (type)
+    {
+    case N_INT:
+        return "INT";
+    case N_FLOAT:
+        return "FLOAT";
+    case N_BOOLEAN:
+        return "BOOLEAN";
+    case N_CHAR:
+        return "CHAR";
+    case N_STRING:
+        return "STRING";
+    case N_UNDEFINED:
+        return "UNDEFINED";
+    default:
+        return "unknown";
+    }
+}
+
+char *print_natureza(int type)
+{
+    switch (type)
+    {
+    case C_LIT:
+        return "LITERAL";
+    case C_VAR:
+        return "VARIABLE";
+    case C_FUNC:
+        return "FUNCTION";
+    case C_VET:
+        return "VECTOR";
+    default:
+        return "unkwnown";
+    }
 }

@@ -36,7 +36,7 @@ LIST* create_list();
 void print_list(LIST *list);
 
 // add element at the end of the list
-void add_to_list(LIST *list, char* element, int type);
+void add_to_list(LIST **list, char* element, int type);
 
 // free the list
 void free_list(LIST *list);

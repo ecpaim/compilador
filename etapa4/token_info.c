@@ -50,11 +50,11 @@ TOKEN_INFO* add_token(int line, int type, char* yytext, int lit_type){
 				}  
 				break;
 			case STRING:
-				p = strdup(yytext); 
+			    p = strdup(yytext); 
 				p_linha = malloc(sizeof(p)-1);
-				memcpy(p_linha, p+1,sizeof(p_linha));
+				memcpy(p_linha, p+1,strlen(p));
 				free(p);
-				p_linha[strlen(p_linha)] = 0; // removes last "
+				p_linha[strlen(p_linha)-1] = 0; // removes last "
 				new_token->valor.s = p_linha;
 				break;	
 			default:

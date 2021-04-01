@@ -6,7 +6,13 @@
 
 char a;
 
-int bar(){
-    a = 'c' * 'd';
-    //a = ? (1 && 2 && (3 + 4));
+int bar(int b){
+    int e <= b;
+    //string c;
+    //a = 'a' + 'b' + ( 'c' + 'd');
+    //c = "diego";
+    //b = 1;
+    //float d <= 'a'; 
+    //bar(d);
 }
+

@@ -1,7 +1,7 @@
 #ifndef TOKEN_HEADER
 #define TOKEN_HEADER
 enum tipo{ CHAR_ESP, OP_COMP, IDENT, LIT};
-enum tipo_lit{INT, FLOAT, CHAR, BOOLEAN, STRING, OC_ID_SC};
+enum tipo_lit{INT, FLOAT, BOOLEAN, CHAR, STRING, OC_ID_SC};
 
 typedef struct token_info{
 	int linha;

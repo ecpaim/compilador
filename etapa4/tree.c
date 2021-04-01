@@ -54,9 +54,11 @@ void libera(node_t* tree){
     for (int i=0; i < n_child; i++){
         tree->n_child--;
         libera(tree->children[i]);
+        
     } 
     if (tree->next_cmd != NULL){
         libera(tree->next_cmd);
+        
     }
 
     if(tree != NULL) {

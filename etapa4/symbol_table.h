@@ -36,3 +36,6 @@ int get_var_size_by_type(int type);
 int verify_function_return(STACK* stack, node_t *exp, int f_type);
 
 int check_type_compatibility(int type1, int type2);
+
+char* print_type(int type);
+char *print_natureza(int type);

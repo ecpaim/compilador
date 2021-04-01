@@ -91,7 +91,7 @@ int f_type;
 %start programa_star
 %%
 programa_star: 
-    programa { arvore = $1; print_stack(hash_stack); pop_stack(hash_stack); }
+    programa { arvore = $1; print_stack(hash_stack); pop_stack(hash_stack);  }
 ;
 programa: 
     def programa { $$ = join_nodes($1, $2); }
@@ -150,6 +150,7 @@ func_header :
         if(r!=0){
             return r;
         }
+        
       }
     | TK_PR_STATIC tipo TK_IDENTIFICADOR { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_params 
     { 
@@ -172,20 +173,29 @@ func_params :
 func_prim_arg : 
     tipo TK_IDENTIFICADOR ',' func_prim_arg { 
         node_t* aux_node = cria_nodo($2->valor.s, $2);
-        add_func_arg_to_table(hash_stack, $2, $1, 0);
+        int r = add_func_arg_to_table(hash_stack, $2, $1, 0);
+        if(r!=0)
+            return r;
         $$ = join_nodes(aux_node, $4); 
      }
     | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { 
         node_t* aux_node = cria_nodo($3->valor.s, $3);
-        add_func_arg_to_table(hash_stack, $3, $2, 1);
+        int r = add_func_arg_to_table(hash_stack, $3, $2, 1);
+        if(r!=0)
+            return r;
         $$ = join_nodes(aux_node, $5);
      }
     | tipo TK_IDENTIFICADOR { 
-        add_func_arg_to_table(hash_stack, $2, $1, 0);
+        int r = add_func_arg_to_table(hash_stack, $2, $1, 0);
+        if(r!=0)
+            return r;
         $$ = cria_nodo($2->valor.s, $2);
+       
      }
     | TK_PR_CONST tipo TK_IDENTIFICADOR { 
-        add_func_arg_to_table(hash_stack, $3, $2, 1);
+        int r = add_func_arg_to_table(hash_stack, $3, $2, 1);
+        if(r!=0)
+            return r;
         $$ = cria_nodo($3->valor.s, $3);
      }
 ; 
@@ -238,9 +248,7 @@ cmd_decl_var :
 lista_decl_var :
     TK_IDENTIFICADOR inic_decl_var { 
         $$ = cria_nodo("<=",NULL); 
-        char str2[16]; 
-        sprintf(str2,"%s",$1->valor.s); 
-        node_t* aux = cria_nodo(str2,$1);
+        node_t* aux = cria_nodo($1->valor.s, NULL);
         add_child($$, aux); 
         add_child($$, $2);  
         int r = verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const);
@@ -264,7 +272,7 @@ lista_decl_var :
         add_child($$, $2);
         $$ = join_nodes($$, $4);
     }
-    | TK_IDENTIFICADOR ',' lista_decl_var { free_token($1); $$ = $3; }
+    | TK_IDENTIFICADOR ',' lista_decl_var { /* esse identificador precisa ser adicionado na tabela de simbolos*/ $$ = $3; }
 ;
 inic_decl_var :
     TK_OC_LE TK_IDENTIFICADOR {

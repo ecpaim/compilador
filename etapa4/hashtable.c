@@ -68,15 +68,16 @@ void free_entry(HASH_TBL *entry)
     if (entry->content != NULL)
     {   
         free_token(entry->content->valor);
-
+        
         LIST* aux = (LIST*) entry->content->argumentos;
         LIST* next = (LIST*) entry->content->argumentos;
         while(next != NULL) {
+            next = aux->next;
+
             free(aux->label);
             free(aux);
-
-            next = aux->next;
         }
+        
 
         free(entry->content); // isso vai ter que ser refatorado provavelmente
     }
@@ -90,7 +91,7 @@ void clear_table(HASH_TBL *hashtab[], int hash_tab_size)
     for (int i = 0; i < hash_tab_size; i++)
     {
         if (hashtab[i] != NULL)
-        {
+        {   
             HASH_TBL *aux = hashtab[i]->next;
             while (aux != NULL)
             {
@@ -98,6 +99,7 @@ void clear_table(HASH_TBL *hashtab[], int hash_tab_size)
                 free_entry(aux);
                 aux = next_aux;
             }
+            
             free_entry(hashtab[i]);
         }
     }
