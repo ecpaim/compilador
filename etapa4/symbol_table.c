@@ -599,10 +599,6 @@ int function_call(STACK *stack, node_t *node)
     if (node != NULL && node->n_child > 0)
         func_called_param = node->children[0];
     LIST *func_params = func_entry->content->argumentos;
-    if (func_params == NULL)
-    {
-        printf("func params é null\n");
-    }
     while (func_params != NULL && func_called_param != NULL)
     {
         if (!check_type_compatibility(func_called_param->tipo, func_params->type))
