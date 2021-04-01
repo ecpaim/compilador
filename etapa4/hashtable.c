@@ -69,15 +69,15 @@ void free_entry(HASH_TBL *entry)
     {   
         free_token(entry->content->valor);
         
-        LIST* aux = (LIST*) entry->content->argumentos;
+        LIST* aux;
         LIST* next = (LIST*) entry->content->argumentos;
+        
         while(next != NULL) {
-            next = aux->next;
-
+            aux = next;
+            next = next->next;
             free(aux->label);
             free(aux);
         }
-        
 
         free(entry->content); // isso vai ter que ser refatorado provavelmente
     }

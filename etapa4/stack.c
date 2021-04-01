@@ -114,12 +114,14 @@ void add_to_list(LIST **list, char* element, int type) {
 	LIST* new_element = malloc(sizeof(LIST));
 	new_element->label = strdup(element);
 	new_element->type = type;
+	new_element->next = NULL;
 
 	if(*list != NULL){
-		(*list)->next = new_element;
+		new_element->next = (*list);
+		(*list) = new_element;
+		
 	} else {
 		*list = new_element;
-		(*list)->next = NULL;
 	}
 		
 }

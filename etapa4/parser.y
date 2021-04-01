@@ -91,7 +91,7 @@ int f_type;
 %start programa_star
 %%
 programa_star: 
-    programa { arvore = $1; print_stack(hash_stack); pop_stack(hash_stack);  }
+    programa { arvore = $1; pop_stack(hash_stack);  }
 ;
 programa: 
     def programa { $$ = join_nodes($1, $2); }
@@ -136,32 +136,23 @@ funcao :
 	func_header func_block { 
         add_child($1, $2); 
         $$ = $1; 
-        printf("rreconheceu funcao \n");
+       
         }
 ;
 func_header : 
-    tipo TK_IDENTIFICADOR { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_params 
+    tipo TK_IDENTIFICADOR {  hash_stack = put_stack(hash_stack); } func_params 
     { 
-        char str[16]; 
-        sprintf(str,"%s",$2->valor.s); 
-        $$ = cria_nodo(str, $2);
+        $$ = cria_nodo($2->valor.s, $2);
         f_type = atoi($1->label);
-        int r = add_function_to_table(hash_stack, $2, $1, 0, $4);
-        if(r!=0){
-            return r;
-        }
-        
+        int r = add_function_to_table(hash_stack, $2, $1, 0, $4); if(r!=0) return r;
+         
       }
-    | TK_PR_STATIC tipo TK_IDENTIFICADOR { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_params 
+    | TK_PR_STATIC tipo TK_IDENTIFICADOR {  hash_stack = put_stack(hash_stack); } func_params 
     { 
-        char str[16]; 
-        sprintf(str,"%s",$3->valor.s); 
-        $$ = cria_nodo(str, $3);
+        $$ = cria_nodo($3->valor.s, $3);
         f_type = atoi($2->label);
-        int r = add_function_to_table(hash_stack, $3, $2, 1, $5);
-        if(r!=0){
-            return r;
-        }
+        int r = add_function_to_table(hash_stack, $3, $2, 1, $5); if(r!=0) return r;
+        
      }
 ;
 
@@ -173,41 +164,33 @@ func_params :
 func_prim_arg : 
     tipo TK_IDENTIFICADOR ',' func_prim_arg { 
         node_t* aux_node = cria_nodo($2->valor.s, $2);
-        int r = add_func_arg_to_table(hash_stack, $2, $1, 0);
-        if(r!=0)
-            return r;
+        int r = add_func_arg_to_table(hash_stack, $2, $1, 0); if(r!=0) return r;
         $$ = join_nodes(aux_node, $4); 
      }
     | TK_PR_CONST tipo TK_IDENTIFICADOR ',' func_prim_arg { 
         node_t* aux_node = cria_nodo($3->valor.s, $3);
-        int r = add_func_arg_to_table(hash_stack, $3, $2, 1);
-        if(r!=0)
-            return r;
+        int r = add_func_arg_to_table(hash_stack, $3, $2, 1); if(r!=0) return r;
         $$ = join_nodes(aux_node, $5);
      }
     | tipo TK_IDENTIFICADOR { 
-        int r = add_func_arg_to_table(hash_stack, $2, $1, 0);
-        if(r!=0)
-            return r;
+        int r = add_func_arg_to_table(hash_stack, $2, $1, 0); if(r!=0) return r;
         $$ = cria_nodo($2->valor.s, $2);
        
      }
     | TK_PR_CONST tipo TK_IDENTIFICADOR { 
-        int r = add_func_arg_to_table(hash_stack, $3, $2, 1);
-        if(r!=0)
-            return r;
+        int r = add_func_arg_to_table(hash_stack, $3, $2, 1); if(r!=0) return r;
         $$ = cria_nodo($3->valor.s, $3);
      }
 ; 
 
 func_block :
-    '{' func_commands '}' { $$ = $2; printf("tirando tabela da pilha... \n"); hash_stack = pop_stack(hash_stack); }
-    | '{''}' { $$ = NULL; hash_stack = pop_stack(hash_stack); } // se eu tenho for(a=1;a<10;a++){} eu criei tabela e preciso tirar ela dps
+    '{' func_commands '}' { $$ = $2;   hash_stack = pop_stack(hash_stack); }
+    | '{''}' { $$ = NULL;  hash_stack = pop_stack(hash_stack); } // se eu tenho for(a=1;a<10;a++){} eu criei tabela e preciso tirar ela dps
 ;
 
 func_commands : 
     comando';' func_commands { $$ = join_nodes($1, $3); } 
-    | comando';' { $$ = $1; }
+    | comando ';' { $$ = $1; }
     | cmd_fluxo { $$ = $1; }
     | cmd_fluxo func_commands { $$ = join_nodes($1, $2); }
 ;
@@ -222,25 +205,29 @@ comando :
     | cmd_simple_keyword { $$ = $1; }
 ;
 
-cmd_scope: '{' { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } comando '}' { $$ = $3; printf("tirando tabela da pilha... \n"); hash_stack = pop_stack(hash_stack); }
+cmd_scope: 
+    '{' {  hash_stack = put_stack(hash_stack); } func_commands '}' {  $$ = $3; hash_stack = pop_stack(hash_stack); }
 ;
 
 cmd_decl_var :
     tipo {v_type = atoi($1->label);} lista_decl_var { 
-       
+       libera_nodo($1);
         $$ = $3; 
     }
     | TK_PR_STATIC tipo { v_type = atoi($2->label);} lista_decl_var { 
         v_static = 1;
+        libera_nodo($2);
         $$ = $4; 
     }
     | TK_PR_STATIC TK_PR_CONST tipo { v_type = atoi($3->label); } lista_decl_var { 
         v_static = 1;
         v_const = 1;
+        libera_nodo($3);
         $$ = $5; 
     }
     | TK_PR_CONST tipo {v_type = atoi($2->label);} lista_decl_var { 
         v_const = 1;
+        libera_nodo($2);
         $$ = $4; 
     }
 ;
@@ -265,14 +252,16 @@ lista_decl_var :
     }
     | TK_IDENTIFICADOR inic_decl_var ',' lista_decl_var { 
         $$ = cria_nodo("<=",NULL); 
-        char str2[16];
-        sprintf(str2,"%s",$1->valor.s);
-        node_t* aux = cria_nodo(str2,$1);
+        node_t* aux = cria_nodo($1->valor.s, NULL);
+        int r = verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const); if(r != 0) return r;
         add_child($$, aux);
         add_child($$, $2);
         $$ = join_nodes($$, $4);
     }
-    | TK_IDENTIFICADOR ',' lista_decl_var { /* esse identificador precisa ser adicionado na tabela de simbolos*/ $$ = $3; }
+    | TK_IDENTIFICADOR ',' lista_decl_var { 
+        int r = verify_var_declaration(hash_stack, $1, v_type, NULL, v_static, v_const); if(r != 0) return r;
+        $$ = $3; 
+    }
 ;
 inic_decl_var :
     TK_OC_LE TK_IDENTIFICADOR {
@@ -362,12 +351,14 @@ cmd_func_call_args :
 cmd_shift :
     TK_IDENTIFICADOR shift_op TK_LIT_INT { char str[16]; sprintf(str,"%s",$1->valor.s); node_t* aux = cria_nodo(str,$1); 
        char str2[16]; sprintf(str2,"%d",$3->valor.i); node_t* aux2 = cria_nodo(str2,$3); 
-       add_child($2, aux); add_child($2, aux2); $$ = $2; }
+       add_child($2, aux); add_child($2, aux2); $$ = $2; 
+       int r = verify_shift_size($3); if(r !=0) return r;}
     | TK_IDENTIFICADOR'['exp']' shift_op TK_LIT_INT { char str[16]; sprintf(str,"%s",$1->valor.s); node_t* aux = cria_nodo(str,$1); 
         node_t* aux2 = cria_nodo("[]",NULL); 
         add_child(aux2, aux); add_child(aux2,$3); 
         char str3[16]; sprintf(str3,"%d",$6->valor.i); node_t* aux3 = cria_nodo(str3,$6);
         add_child($5, aux2); add_child($5, aux3); $$ = $5;
+        int r = verify_shift_size($6); if(r !=0) return r;
         }
 ;
 shift_op : 
@@ -385,7 +376,7 @@ cmd_simple_keyword :
 ;
 
 cmd_fluxo :
-    TK_PR_IF { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } '('exp')' func_block cmd_fluxo_else { 
+    TK_PR_IF { hash_stack = put_stack(hash_stack); } '('exp')' func_block cmd_fluxo_else { 
         $$ = cria_nodo("if", NULL);
         add_child($$, $4);
         add_child($$, $6);
@@ -395,24 +386,24 @@ cmd_fluxo :
 ;
 
 cmd_fluxo_else :
-    TK_PR_ELSE { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } func_block { $$ = $3;}
+    TK_PR_ELSE { hash_stack = put_stack(hash_stack); } func_block { $$ = $3;}
     | { $$ = NULL; }
 ;
 
 cmd_iter :
-    TK_PR_FOR { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } '('cmd_attrib ':' exp ':' cmd_attrib ')' func_block {
+    TK_PR_FOR { hash_stack = put_stack(hash_stack); } '('cmd_attrib ':' exp ':' cmd_attrib ')' func_block {
         $$ = cria_nodo("for", NULL);
         add_child($$, $4);
         add_child($$, $6);
         add_child($$, $8);
         add_child($$, $10);
-	printf("reconheceu for\n");
+	
     }
-    | TK_PR_WHILE { printf("colocando tabela na pilha... \n"); hash_stack = put_stack(hash_stack); } '(' exp ')' TK_PR_DO func_block {
+    | TK_PR_WHILE { hash_stack = put_stack(hash_stack); } '(' exp ')' TK_PR_DO func_block {
         $$ = cria_nodo("while", NULL);
         add_child($$, $4);
         add_child($$, $7);
-	printf("reconheceu while\n");
+	
     }
 ;
 unary_op: 

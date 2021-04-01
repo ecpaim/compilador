@@ -14,6 +14,8 @@ int binary_type_inference(node_t *parent, node_t *left, node_t *right);
 // sets parent->tipo according to the type conversions
 int unary_type_inference(node_t *parent, node_t *son);
 
+int verify_shift_size(TOKEN_INFO *token);
+
 int verify_type_io(STACK *stack, TOKEN_INFO *token, char *type, int is_lit);
 
 // function to add function declaration to hash table. Assumes the top of the stack is the scope of the function

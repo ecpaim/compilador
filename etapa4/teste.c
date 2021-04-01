@@ -4,10 +4,15 @@
 //    c = ? 5;
 // }
 
-char a;
+int a, b[10];
 
-int bar(int b){
-    int e <= b;
+int bar(int b, int c, float d, int e){
+
+	{
+		int b;
+		{int b;};
+	};
+	
     //string c;
     //a = 'a' + 'b' + ( 'c' + 'd');
     //c = "diego";
