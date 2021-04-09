@@ -441,8 +441,8 @@ exp:
     '(' exp ')' { $$ = $2; }
     | exp low_precedence exp_high { add_child($2,$1); add_child($2,$3); $$ = $2; int r = binary_type_inference($$, $1, $3); if(r != 0) return r;  }
     | exp  low_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = binary_type_inference($$, $1, $4); if(r != 0) return r;  }
-    | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", NULL); add_child($$,$1); add_child($$,$3); add_child($$,$5); int r = binary_type_inference($$, $3, $5); if(r != 0) return r;  }
-    | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", NULL); add_child($$,$1); add_child($$,$3); add_child($$,$6); int r = binary_type_inference($$, $3, $6); if(r != 0) return r;  }
+    | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$5); int r = binary_type_inference($$, $3, $5); if(r != 0) return r;  }
+    | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$6); int r = binary_type_inference($$, $3, $6); if(r != 0) return r;  }
     | exp_high { $$ = $1; }
 ;
 exp_high:

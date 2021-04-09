@@ -431,6 +431,9 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL **entry, int use
         printf("ERROR: Identifier %s undeclared in line %d.\n", ident->valor.s, ident->linha);
         return ERR_UNDECLARED;
     }
+
+    int r = 0;
+
     if (used_as_vector)
     { // se é vetor e tá sendo usado como variavel
         if ((*entry)->content->natureza == C_VET)
@@ -438,7 +441,7 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL **entry, int use
         else
         {
             printf("ERROR: %s in line %d is a %s, not a VECTOR.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
-            return ERR_VECTOR;
+            r = -1;
         }
     }
     else if (used_as_function)
@@ -448,7 +451,7 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL **entry, int use
         else
         {
             printf("ERROR: %s in line %d is a %s, not of type FUNCTION.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
-            return ERR_FUNCTION;
+            r = -1;
         }
     }
     else
@@ -458,9 +461,24 @@ int verify_used_ident(STACK *stack, TOKEN_INFO *ident, HASH_TBL **entry, int use
         else
         {
             printf("ERROR: %s in line %d is a %s, not of type VARIABLE.\n", (*entry)->name, ident->linha, print_natureza((*entry)->content->natureza));
-            return ERR_VARIABLE;
+            r = -1;
         }
     }
+
+    if(r == -1){
+        switch((*entry)->content->natureza){
+            case 1: //VAR
+                return ERR_VARIABLE;
+            case 2: // FUNC
+                return ERR_FUNCTION;
+            case 3: // VEC
+                return ERR_VECTOR;
+            default:
+                break;
+        }
+    }
+
+
     return 0;
 }
 
@@ -602,9 +620,15 @@ int function_call(STACK *stack, node_t *node)
     while (func_params != NULL && func_called_param != NULL)
     {
         if (!check_type_compatibility(func_called_param->tipo, func_params->type))
-        {
+        {   
+
             printf("ERR: Wrong parameter on function call on line %d, expected %s but %s is of type %s.\n", node->value->linha, print_type(func_params->type), func_called_param->label, print_type(func_called_param->tipo));
-            return ERR_WRONG_TYPE_ARGS;
+            
+            if(func_called_param->tipo == 4){
+                return ERR_FUNCTION_STRING;
+            } else {
+                return ERR_WRONG_TYPE_ARGS;
+            }
         }
         func_params = func_params->next;
         func_called_param = func_called_param->next_cmd;
