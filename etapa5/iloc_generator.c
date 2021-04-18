@@ -105,7 +105,7 @@ int ILOC_add_func_arg(STACK* stack, TOKEN_INFO* identificador, node_t *type, int
     return r;
 }
 
-// this is just an auxiliary function
+// the variables defined in the func header are stored after all param values
 void update_args_offset(STACK *stack, char *func_name, int list_size, char *label){
 
     HASH_TBL *entry = lookup_stack(stack, func_name);
@@ -158,7 +158,7 @@ int ILOC_add_function(STACK *stack, TOKEN_INFO *indentificador, node_t *node, in
 
     char *code = malloc(n_of_lines*128); // each instruction can have at max 128 characters
 
-    sprintf(code, "%s: \ni2i rsp => rfp \naddI rsp, %d => rsp \n", label, deslocamento_rfp);
+    sprintf(code, "%s: \ni2i rsp => rfp \naddI rsp, %d => rsp \n", label, deslocamento_rfp + 4*list_size);
 
     char *new_reg = create_register();
     int param_offset = 16;
@@ -188,7 +188,7 @@ STACK *ILOC_put_stack(STACK *stack, char *type){
     
     if(strcmp(type,"function") == 0){
 
-        deslocamento_rfp = 16; // after
+        deslocamento_rfp = 16; // after return address, rsp and rfp values, return value
     }
 
     return stack;
@@ -230,7 +230,7 @@ CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_c
 
         /* the main function doesn't have instructions to jump to return address */
 
-        char *halt_code = strdup("halt");
+        char *halt_code = strdup("halt\n");
 
         CODE_BLOCK *halt_block = create_block(halt_code, 1);
 
@@ -347,6 +347,7 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
     return 0;
 }
 
+// se o nodo é um token literal ou identificador cria o código correspondente
 node_t *ILOC_cria_nodo(char *label, TOKEN_INFO *valor_lexico, char *type, STACK *stack){
 
     node_t *r = cria_nodo(label, valor_lexico);
@@ -393,9 +394,80 @@ node_t *ILOC_cria_nodo(char *label, TOKEN_INFO *valor_lexico, char *type, STACK 
 }
 
 
+int ILOC_verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *var_value, int is_static, int is_const){
+
+    int r = verify_var_declaration(stack, ident, type, var_value, is_static, is_const);
+
+    HASH_TBL *entry = lookup_declaration(stack, ident->valor.s);
+
+    entry->content->deslocamento = deslocamento_rfp;
+
+    deslocamento_rfp += 4;
+
+    return r;
+}
+
+
+void ILOC_add_local_var(node_t *parent, node_t *ident, node_t *initializer, char *type, STACK *stack){
+
+    char *line = malloc(1*128);
+
+    sprintf(line,"addI rsp, 4 => rsp \n");
+
+    CODE_BLOCK *declr_block = create_block(line, 1);
+
+    if(strcmp(type, "initialized") == 0){
+
+        HASH_TBL *entry = lookup_declaration(stack, ident->label);
+
+        char *attr = malloc(1*128);
+
+        sprintf(attr,"storeAI %s =>rfp, %d \n", initializer->code->r, entry->content->deslocamento);
+
+        CODE_BLOCK *attr_block = create_block(attr,1);
+
+        declr_block = concat_iloc_code(declr_block, initializer->code);
+
+        declr_block = concat_iloc_code(declr_block, attr_block);
+
+        parent->code = declr_block;
+
+    } else if(strcmp(type, "not_initialized") == 0){
+
+        parent->code = declr_block;
+
+    }
+}
+
+void ILOC_add_rbss_offset(CODE_BLOCK *iloc_code){
+
+     int lines = 0;
+
+    do{
+        lines += iloc_code->number_of_lines;
+        iloc_code = iloc_code->previous;
+
+    }while(iloc_code->previous != NULL);
+
+    lines += iloc_code->number_of_lines;
+
+    char *code = malloc(1*128);
+
+    sprintf(code,"loadI %d => rbss \n",lines+1);
+
+    CODE_BLOCK *block = create_block(code,1);
+
+    block->next = iloc_code->next;
+    iloc_code->next->previous = block;
+    iloc_code->next = block;
+    block->previous = iloc_code;
+
+    //printf("number of lines: %d\n", lines+1);
+
+}
+
 void print_iloc(CODE_BLOCK *iloc_code){
 
-    int lines = 0;
 
     while(iloc_code->previous != NULL){
         iloc_code = iloc_code->previous;
@@ -403,10 +475,8 @@ void print_iloc(CODE_BLOCK *iloc_code){
 
     do{
         printf("%s",iloc_code->code);
-        lines += iloc_code->number_of_lines;
         iloc_code = iloc_code->next;
 
     }while(iloc_code != NULL);
 
-    printf("\nnumber of lines: %d\n", lines);
 }

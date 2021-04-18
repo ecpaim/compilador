@@ -95,6 +95,7 @@ int has_main_function;
 %%
 programa_star: 
     programa { arvore = $1; pop_stack(hash_stack); 
+        ILOC_add_rbss_offset(iloc_code);
         print_iloc(iloc_code); 
         printf("rbss: %d \nrfp: %d \n", deslocamento_rbss, deslocamento_rfp); 
         if(has_main_function == 0){
@@ -123,7 +124,7 @@ literais :
 	TK_LIT_CHAR { char str[16]; sprintf(str,"%c",$1->valor.c); $$ = cria_nodo(str,$1); $$->tipo = N_CHAR; }
 	| TK_LIT_FALSE { char str[16]; sprintf(str,"false"); $$ = cria_nodo(str,$1); $$->tipo = N_BOOLEAN; }
 	| TK_LIT_FLOAT { char str[16]; sprintf(str,"%f",$1->valor.f); $$ = cria_nodo(str,$1); $$->tipo = N_FLOAT;  }
-	| TK_LIT_INT { char str[16]; sprintf(str,"%d",$1->valor.i); $$ = cria_nodo(str,$1); $$->tipo = N_INT;  }
+	| TK_LIT_INT { char str[16]; sprintf(str,"%d",$1->valor.i); $$ = ILOC_cria_nodo(str, $1, "lit", hash_stack); $$->tipo = N_INT;  }
 	| TK_LIT_STRING { $$ = cria_nodo($1->valor.s,$1); $$->tipo = N_STRING; }
 	| TK_LIT_TRUE { char str[16]; sprintf(str,"true"); $$ = cria_nodo(str,$1); $$->tipo = N_BOOLEAN;  }
 ;
@@ -249,36 +250,57 @@ lista_decl_var :
         node_t* aux = cria_nodo($1->valor.s, NULL);
         add_child($$, aux); 
         add_child($$, $2);  
-        int r = verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const);
-        if( r != 0 ) {
-            return r;
-        }
+        int r = ILOC_verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const); if( r != 0 ) { return r; }
+        ILOC_add_local_var($$, aux, $2, "initialized", hash_stack);
     }
     | TK_IDENTIFICADOR { 
-        int r = verify_var_declaration(hash_stack, $1, v_type, NULL, v_static, v_const);
+        int r = ILOC_verify_var_declaration(hash_stack, $1, v_type, NULL, v_static, v_const);
         if( r != 0 ) {
             return r;
         }
-        $$ = NULL;
+        $$ = cria_nodo("decl", NULL);
+        node_t* aux = cria_nodo($1->valor.s, NULL);
+        add_child($$, aux);
+
+        ILOC_add_local_var($$, aux, NULL, "not_initialized", hash_stack);
     }
-    | TK_IDENTIFICADOR inic_decl_var ',' lista_decl_var { 
+    | TK_IDENTIFICADOR inic_decl_var { 
+
+        node_t* aux = cria_nodo($1->valor.s, NULL);
+        int r = ILOC_verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const); if(r != 0) return r;
+        free(aux->label);
+        free(aux);
+
+         } ',' lista_decl_var { 
+
         $$ = cria_nodo("<=",NULL); 
         node_t* aux = cria_nodo($1->valor.s, NULL);
-        int r = verify_var_declaration(hash_stack, $1, v_type, $2, v_static, v_const); if(r != 0) return r;
         add_child($$, aux);
         add_child($$, $2);
+        
+        $$ = join_nodes($$, $5);
+        ILOC_add_local_var($$, $$->children[0], $$->children[1], "initialized", hash_stack);
+        $$->code = concat_iloc_code($$->code, $5->code);
+
+        }
+    | TK_IDENTIFICADOR { 
+
+        int r = ILOC_verify_var_declaration(hash_stack, $1, v_type, NULL, v_static, v_const); if(r != 0) return r;
+
+        } ',' lista_decl_var { 
+
+        $$ = cria_nodo("decl", NULL);
+        node_t* aux = cria_nodo($1->valor.s, NULL);
+        add_child($$, aux);
         $$ = join_nodes($$, $4);
-    }
-    | TK_IDENTIFICADOR ',' lista_decl_var { 
-        int r = verify_var_declaration(hash_stack, $1, v_type, NULL, v_static, v_const); if(r != 0) return r;
-        $$ = $3; 
+
+        ILOC_add_local_var($$, aux, NULL, "not_initialized", hash_stack);
+        $$->code = concat_iloc_code($$->code, $4->code);
     }
 ;
 inic_decl_var :
-    TK_OC_LE TK_IDENTIFICADOR {
-        char str[16]; 
-        sprintf(str,"%s",$2->valor.s); 
-        $$ = cria_nodo(str,$2); 
+    TK_OC_LE TK_IDENTIFICADOR {    
+        $$ = ILOC_cria_nodo($2->valor.s,$2, "ident", hash_stack);
     }
     | TK_OC_LE literais {
         $$ = $2; 
