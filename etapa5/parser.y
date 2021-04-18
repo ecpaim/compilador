@@ -197,11 +197,11 @@ func_prim_arg :
 
 func_block :
     '{' func_commands '}' { $$ = $2;   hash_stack = pop_stack(hash_stack); }
-    | '{''}' { $$ = NULL;  hash_stack = pop_stack(hash_stack); } // se eu tenho for(a=1;a<10;a++){} eu criei tabela e preciso tirar ela dps
+    | '{''}' { $$ = NULL;  hash_stack = pop_stack(hash_stack); } 
 ;
 
 func_commands : 
-    comando';' func_commands { $$ = join_nodes($1, $3); } 
+    comando';' func_commands { $$ = join_nodes($1, $3); $$->code = concat_iloc_code($1->code,$3->code); } 
     | comando ';' { $$ = $1; }
     | cmd_fluxo { $$ = $1; }
     | cmd_fluxo func_commands { $$ = join_nodes($1, $2); }
@@ -318,7 +318,8 @@ cmd_attrib :
        
         if( r != 0) {
             return r;
-        } 
+        }
+        $$->code = ILOC_cmd_attrib($1->valor.s, hash_stack, $3); 
         }
     | TK_IDENTIFICADOR'['exp']' '=' exp { 
         char str[16]; 

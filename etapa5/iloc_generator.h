@@ -49,6 +49,8 @@ void ILOC_add_local_var(node_t *parent, node_t *ident, node_t *initializer, char
 
 void ILOC_add_rbss_offset(CODE_BLOCK *iloc_code);
 
+CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp);
+
 void print_iloc(CODE_BLOCK *iloc_code);
 
 #endif

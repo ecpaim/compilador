@@ -45,7 +45,7 @@ CODE_BLOCK* create_code(){
 
     CODE_BLOCK *new_code = malloc(sizeof(CODE_BLOCK));
 
-    new_code->code = strdup("loadI 2048 => rfp \nloadI 2048 =>rsp \n");
+    new_code->code = strdup("loadI 2048 => rfp \nloadI 2048 => rsp \n");
     new_code->number_of_lines = 2;
     new_code->previous = NULL;
     new_code->next = NULL;
@@ -196,7 +196,6 @@ STACK *ILOC_put_stack(STACK *stack, char *type){
 
 
 CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack){
- 
     if(strcmp(header->label, "main") == 0){
 
         
@@ -464,6 +463,25 @@ void ILOC_add_rbss_offset(CODE_BLOCK *iloc_code){
 
     //printf("number of lines: %d\n", lines+1);
 
+}
+
+CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp){
+    /*
+        < run exp code >
+        storeAI exp->r => rbss/rfp, deslocamento
+    */
+
+    HASH_TBL *entry = lookup_declaration(stack, ident);
+    int base = 0;
+    char *code = malloc(128);
+    if(entry->content->is_global)
+        sprintf(code,"storeAI %s => rbss, %d \n", exp->code->r, entry->content->deslocamento);
+    else
+        sprintf(code,"storeAI %s => rfp, %d \n", exp->code->r, entry->content->deslocamento);
+
+    CODE_BLOCK *block = create_block(code,1);
+
+    return concat_iloc_code( exp->code, block);
 }
 
 void print_iloc(CODE_BLOCK *iloc_code){
