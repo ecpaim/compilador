@@ -496,6 +496,7 @@ CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp) {
         storeAI exp->r => rbss/rfp, deslocamento
     */
 
+
     HASH_TBL *entry = lookup_stack(stack, ident);
     
     char *code = malloc(128);
@@ -506,6 +507,7 @@ CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp) {
         sprintf(code,"storeAI %s => rfp, %d \n", exp->code->r, entry->content->deslocamento);
 
     CODE_BLOCK *block = create_block(code,1);
+ 
     
     return concat_iloc_code( exp->code, block);
 }
@@ -526,7 +528,6 @@ CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *fa
     char* l1 = create_label();
     char* l2 = create_label();
     char *l3 = create_label();
-
     char *code = malloc(128);
     sprintf(code,"cbr %s => %s, %s \n%s: \n", exp->code->r, l1, l2, l1);
     CODE_BLOCK* block = create_block(code, 1);
@@ -534,18 +535,18 @@ CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *fa
     block = concat_iloc_code(block, true_cmds->code);
 
     char *code_JI = malloc(128);
-    sprintf(code_JI,"jumpI => %s\n", l3);
+    sprintf(code_JI,"jumpI => %s\n%s: \n", l3, l2);
     CODE_BLOCK* jumpI_block = create_block(code_JI, 1);
     block = concat_iloc_code(block, jumpI_block);
 
-    char *code_j2 = malloc(128);
-    sprintf(code_j2,"%s:\n", l2);
-    CODE_BLOCK* block_2 = create_block(code_j2, 1);
+    char *code_l3 = malloc(128);
+    sprintf(code_l3,"%s:\n", l3);
+    CODE_BLOCK* block_l3 = create_block(code_l3, 1);
     if(false_cmds != NULL) {
-        block_2 = concat_iloc_code(block_2, false_cmds->code);
+        block_l3 = concat_iloc_code(false_cmds->code, block_l3);
     }
 
-    return concat_iloc_code(block, block_2);
+    return concat_iloc_code(block, block_l3);
 }
 
 CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds)
@@ -643,6 +644,49 @@ CODE_BLOCK* ILOC_cmd_for(STACK *stack, node_t* initial, node_t* condition, node_
     block_l3 = concat_iloc_code(block_ji, block_l3);
 
     return block_l3;
+}
+
+CODE_BLOCK* ILOC_cmd_ternary_op(STACK *stack, node_t* exp, node_t* cmd_true, node_t* cmd_false)
+{
+    /*
+        <exp code>
+        cbr exp->r L1, L2
+    L1:
+        <cmd_true>
+        i2i cmd_true->r R1
+        jumpI => L3
+    L2:
+        <cmd_false>
+        i2i cmd_false->r R1
+    L3: nope
+    */
+    char* l1 = create_label();
+    char* l2 = create_label();
+    char *l3 = create_label();
+    char *r1 = create_register();
+
+    char *code = malloc(128);
+    sprintf(code,"cbr %s => %s, %s \n%s: \n", exp->code->r, l1, l2, l1);
+    CODE_BLOCK* block = create_block(code, 1);
+
+    block = concat_iloc_code(exp->code, block);
+    block = concat_iloc_code(block, cmd_true->code);
+    
+    char *code_JI = malloc(128);
+    sprintf(code_JI,"i2i %s => %s\njumpI => %s\n%s: \n", cmd_true->code->r, r1, l3, l2);
+    CODE_BLOCK* jumpI_block = create_block(code_JI, 1);
+    block = concat_iloc_code(block, jumpI_block);
+
+    block = concat_iloc_code(block, cmd_false->code);
+    
+    char *code_l3 = malloc(128);
+    sprintf(code_l3,"i2i %s => %s\n%s:\n",cmd_false->code->r, r1, l3);
+    CODE_BLOCK* block_l3 = create_block(code_l3, 1);
+    block = concat_iloc_code(block, block_l3);
+
+    block->r = r1;
+
+    return block;
 }
 
 int ILOC_binary_exp(node_t *parent, node_t *left, node_t *right){

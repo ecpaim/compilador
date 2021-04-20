@@ -482,8 +482,27 @@ exp:
     '(' exp ')' { $$ = $2; }
     | exp low_precedence exp_high { add_child($2,$1); add_child($2,$3); $$ = $2; int r = ILOC_binary_exp($$, $1, $3); if(r != 0) return r;  }
     | exp  low_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = ILOC_binary_exp($$, $1, $4); if(r != 0) return r;  }
-    | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$5); int r = ILOC_binary_exp($$, $3, $5); if(r != 0) return r;  }
-    | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$6); int r = ILOC_binary_exp($$, $3, $6); if(r != 0) return r;  }
+    | exp '?' exp ':' exp_unit {  
+       
+        $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC));
+        add_child($$,$1);
+        add_child($$,$3);
+        add_child($$,$5);
+        
+        int r = binary_type_inference($$, $3, $5);
+        if(r != 0) return r;
+        $$->code = ILOC_cmd_ternary_op(hash_stack, $1, $3, $5);
+        
+    }
+    | exp '?' exp ':' '(' exp ')' { 
+        $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC));
+        add_child($$,$1);
+        add_child($$,$3);
+        add_child($$,$6);
+        int r = binary_type_inference($$, $3, $6);
+        if(r != 0) return r;
+        $$->code = ILOC_cmd_ternary_op(hash_stack, $1, $3, $6);
+    }
     | exp_high { $$ = $1; }
 ;
 exp_high:

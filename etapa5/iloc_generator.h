@@ -60,6 +60,8 @@ CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds);
 
 CODE_BLOCK* ILOC_cmd_for(STACK *stack, node_t* initial, node_t* condition, node_t* increment, node_t* cmds);
 
+CODE_BLOCK* ILOC_cmd_ternary_op(STACK *stack, node_t* exp, node_t* cmd_true, node_t* cmd_false);
+
 int ILOC_binary_exp(node_t *parent, node_t *left, node_t *right);
 
 int ILOC_unary_exp(node_t *parent, node_t *child);
