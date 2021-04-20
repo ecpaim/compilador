@@ -97,7 +97,7 @@ programa_star:
     programa { arvore = $1; pop_stack(hash_stack); 
         ILOC_add_rbss_offset(iloc_code);
         print_iloc(iloc_code); 
-        printf("rbss: %d \nrfp: %d \n", deslocamento_rbss, deslocamento_rfp); 
+        //printf("rbss: %d \nrfp: %d \n", deslocamento_rbss, deslocamento_rfp); 
         if(has_main_function == 0){
             printf("ERROR: Could not find main function. \n");
             return 100;
@@ -204,7 +204,7 @@ func_commands :
     comando';' func_commands { $$ = join_nodes($1, $3); $$->code = concat_iloc_code($1->code,$3->code); } 
     | comando ';' { $$ = $1; }
     | cmd_fluxo { $$ = $1; }
-    | cmd_fluxo func_commands { $$ = join_nodes($1, $2); }
+    | cmd_fluxo func_commands { $$ = join_nodes($1, $2); $$->code = concat_iloc_code($1->code,$2->code);}
 ;
 
 comando : 
@@ -415,6 +415,7 @@ cmd_fluxo :
         add_child($$, $4);
         add_child($$, $6);
         add_child($$, $7);
+        $$->code = ILOC_cmd_if(hash_stack, $4, $6, $7);
     }
     | cmd_iter { $$ = $1; }
 ;
@@ -437,7 +438,7 @@ cmd_iter :
         $$ = cria_nodo("while", NULL);
         add_child($$, $4);
         add_child($$, $7);
-	
+        $$->code = ILOC_cmd_while(hash_stack, $4, $7);
     }
 ;
 unary_op: 
@@ -497,8 +498,8 @@ exp_value:
     | cmd_func_call { $$ = $1; /*TODO*/ }
     | TK_LIT_INT { char str[16]; sprintf(str,"%d",$1->valor.i); $$ = ILOC_cria_nodo(str, $1, "lit", hash_stack); $$->tipo = N_INT; }
     | TK_LIT_FLOAT { char str[16]; sprintf(str,"%f",$1->valor.f); $$ = cria_nodo(str,$1); $$->tipo = N_FLOAT; }
-    | TK_LIT_FALSE { $$ = cria_nodo("false",$1); $$->tipo = N_BOOLEAN; }
-    | TK_LIT_TRUE { $$ = cria_nodo("true",$1); $$->tipo = N_BOOLEAN; }
+    | TK_LIT_FALSE { char str[16]; $$ = cria_nodo("false",$1); sprintf(str,"%d",0); $$ = ILOC_cria_nodo(str, $1, "lit", hash_stack); $$->tipo = N_BOOLEAN; }
+    | TK_LIT_TRUE { char str[16]; $$ = cria_nodo("true",$1); sprintf(str,"%d",1); $$ = ILOC_cria_nodo(str, $1, "lit", hash_stack); $$->tipo = N_BOOLEAN; }
     | TK_LIT_STRING { $$ = cria_nodo($1->valor.s,$1); $$->tipo = N_STRING;  }
     | TK_LIT_CHAR { char str[16]; sprintf(str,"%c",$1->valor.c); $$ = cria_nodo(str,$1); $$->tipo = N_CHAR; }
 ;

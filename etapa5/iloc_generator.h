@@ -6,6 +6,7 @@ typedef struct block_of_code{
 
 	char *code;
 	int number_of_lines;
+    char *r; // register containing the result of the expression
 	struct block_of_code *previous;
 	struct block_of_code *next;
 
@@ -50,6 +51,14 @@ void ILOC_add_local_var(node_t *parent, node_t *ident, node_t *initializer, char
 void ILOC_add_rbss_offset(CODE_BLOCK *iloc_code);
 
 CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp);
+
+CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *false_cmds);
+
+CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds);
+
+int ILOC_binary_exp(node_t *parent, node_t *left, node_t *right);
+
+int ILOC_unary_exp(node_t *parent, node_t *child);
 
 void print_iloc(CODE_BLOCK *iloc_code);
 

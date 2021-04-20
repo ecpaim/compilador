@@ -308,7 +308,7 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
 
         char *arg_param = malloc(1*128);
 
-        sprintf(arg_param, "storeAI %s, => rsp, %d \n", arg_reg, rsp_offset);
+        sprintf(arg_param, "storeAI %s => rsp, %d \n", arg_reg, rsp_offset);
         rsp_offset += 4;
 
         CODE_BLOCK *param_block = create_block(arg_param, 1);
@@ -465,16 +465,17 @@ void ILOC_add_rbss_offset(CODE_BLOCK *iloc_code){
 
 }
 
-CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp){
+CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp) {
     /*
         < run exp code >
         storeAI exp->r => rbss/rfp, deslocamento
     */
 
-    HASH_TBL *entry = lookup_declaration(stack, ident);
+    HASH_TBL *entry = lookup_stack(stack, ident);
     int base = 0;
     char *code = malloc(128);
-    if(entry->content->is_global)
+
+    if(entry->content->is_global) 
         sprintf(code,"storeAI %s => rbss, %d \n", exp->code->r, entry->content->deslocamento);
     else
         sprintf(code,"storeAI %s => rfp, %d \n", exp->code->r, entry->content->deslocamento);
@@ -482,6 +483,288 @@ CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp){
     CODE_BLOCK *block = create_block(code,1);
 
     return concat_iloc_code( exp->code, block);
+}
+
+// cmd with optional else: if exp evaluates to true, executes true_cmds, if exp evaluates to false executes false_cmds
+CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *false_cmds) {
+    /*
+        < run exp code >
+        cbr exp->r => L1, L2
+        L1: nop
+        true_cmds
+        jumpI L3
+        L2: nop
+        false_cmds <<<<< can be empty (else is optional)
+        L3: rest
+    */
+
+    char* l1 = create_label();
+    char* l2 = create_label();
+    char *l3 = create_label();
+
+    char *code = malloc(128);
+    sprintf(code,"cbr %s => %s, %s \n%s:\n", exp->code->r, l1, l2, l1);
+    CODE_BLOCK* block = create_block(code, 1);
+    block = concat_iloc_code(exp->code, block);
+    block = concat_iloc_code(block, true_cmds->code);
+
+    char *code_JI = malloc(128);
+    sprintf(code_JI,"jumpI %s", l3);
+    CODE_BLOCK* jumpI_block = create_block(code_JI, 1);
+    block = concat_iloc_code(block, jumpI_block);
+
+    char *code_j2 = malloc(128);
+    sprintf(code_j2,"%s:\n", l2);
+    CODE_BLOCK* block_2 = create_block(code_j2, 1);
+    if(false_cmds != NULL) {
+        printf("cmd do else >>  %s  << \n", false_cmds->code->code);
+        block_2 = concat_iloc_code(block_2, false_cmds->code);
+    }
+
+    return concat_iloc_code(block, block_2);
+}
+
+CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds)
+{
+    /*
+    L1:
+        <exp code>
+        cbr exp->r => L2, L3
+    L2:
+        <code from do ...>
+        jumpI L1
+    L3: 
+        nope
+    */
+    char* l1 = create_label();
+    char* l2 = create_label();
+    char* l3 = create_label();
+
+    char *code_l1 = malloc(128);
+    sprintf(code_l1,"%s: \n", l1);
+    CODE_BLOCK* block_l1 = create_block(code_l1, 1);
+    block_l1 = concat_iloc_code(block_l1, exp->code);
+
+    char *code_cbr = malloc(128);
+    sprintf(code_cbr,"cbr %s => %s, %s\n", exp->code->r, l2, l3);
+    CODE_BLOCK* block_cbr = create_block(code_cbr, 1);
+    block_cbr = concat_iloc_code(block_l1, block_cbr);
+
+    char *code_l2 = malloc(128);
+    sprintf(code_l2,"%s: \n", l2);
+    CODE_BLOCK* block_l2 = create_block(code_l2, 1);
+    block_l2 = concat_iloc_code(block_cbr, block_l2);
+
+    block_l2 = concat_iloc_code(block_l2, do_cmds->code);
+
+    char *code_ji = malloc(128);
+    sprintf(code_ji,"jumpI => %s\n", l1);
+    CODE_BLOCK* block_ji = create_block(code_ji, 1);
+    block_ji = concat_iloc_code(block_l2, block_ji);
+
+    char *code_l3 = malloc(128);
+    sprintf(code_l3,"%s: \n", l3);
+    CODE_BLOCK* block_l3 = create_block(code_l3, 1);
+    block_l3 = concat_iloc_code(block_ji, block_l3);
+
+    return block_l3;
+}
+
+int ILOC_binary_exp(node_t *parent, node_t *left, node_t *right){
+
+    int r = binary_type_inference(parent, left, right); 
+
+    if(r != 0){
+        return r;
+    }
+    char *regLeft = left->code->r;
+    char *regRight = right->code->r;
+
+    char *op = parent->label;
+
+    char *resultReg = create_register();
+
+    char *line = malloc(1*128);
+
+    CODE_BLOCK *op_block;
+
+    if(strcmp(op,"+") == 0){
+        
+        sprintf(line,"add %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "-") == 0){
+
+        sprintf(line,"sub %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "*") == 0){
+
+        sprintf(line,"mult %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "/") == 0){
+
+        sprintf(line,"div %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "&&") == 0){
+
+        sprintf(line,"and %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "||") == 0){
+
+        sprintf(line,"or %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "<") == 0){
+
+        sprintf(line,"cmp_LT %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, ">") == 0){
+
+        sprintf(line,"cmp_GT %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "<=") == 0){
+
+        sprintf(line,"cmp_LE %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, ">=") == 0){
+
+        sprintf(line,"cmp_GE %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "==") == 0){
+
+        sprintf(line,"cmp_EQ %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } else if( strcmp(op, "!=") == 0){
+
+        sprintf(line,"cmp_NE %s, %s => %s \n", regLeft, regRight, resultReg);
+
+    } 
+
+    op_block = create_block(line, 1);
+
+    /* SHORT CIRCUIT */
+    if(strcmp(op,"&&") != 0 && strcmp(op,"||") != 0 ){
+
+        parent->code = concat_iloc_code(left->code, right->code);
+
+        parent->code = concat_iloc_code(parent->code, op_block);
+
+    } else if( strcmp(op,"&&") == 0 ){
+
+        char *circuit_line = malloc(3*128);
+        
+        char *labelNoJump = create_label();
+
+        char *labelJump = create_label();
+
+        sprintf(circuit_line,"i2i %s => %s \ncbr %s => %s, %s \n%s: \n",regLeft, resultReg, resultReg, labelNoJump, labelJump, labelNoJump);
+
+        CODE_BLOCK *circuit_block = create_block(circuit_line,3);
+
+        char *jump_line = malloc(1*128);
+
+        sprintf(jump_line,"%s: \n", labelJump);
+
+        CODE_BLOCK *jump_block = create_block(jump_line,1);
+
+        parent->code = concat_iloc_code(left->code, circuit_block);
+
+        parent->code = concat_iloc_code(parent->code, right->code);
+
+        parent->code = concat_iloc_code(parent->code, op_block);
+        
+        parent->code = concat_iloc_code(parent->code, jump_block);
+
+        free(labelJump);
+        free(labelNoJump);
+
+    } else if( strcmp(op,"||") == 0 ){
+
+        char *circuit_line = malloc(3*128);
+        
+        char *labelNoJump = create_label();
+
+        char *labelJump = create_label();
+
+        sprintf(circuit_line,"i2i %s => %s \ncbr %s => %s, %s \n%s: \n",regLeft, resultReg, resultReg, labelJump, labelNoJump, labelNoJump);
+
+        CODE_BLOCK *circuit_block = create_block(circuit_line,3);
+
+        char *jump_line = malloc(1*128);
+
+        sprintf(jump_line,"%s: \n", labelJump);
+
+        CODE_BLOCK *jump_block = create_block(jump_line,1);
+
+        parent->code = concat_iloc_code(left->code, circuit_block);
+
+        parent->code = concat_iloc_code(parent->code, right->code);
+
+        parent->code = concat_iloc_code(parent->code, op_block);
+        
+        parent->code = concat_iloc_code(parent->code, jump_block);
+
+        free(labelJump);
+        free(labelNoJump);
+    }
+    
+
+    parent->code->r = resultReg;
+    
+    return 0;
+}
+int ILOC_unary_exp(node_t *parent, node_t *child){
+
+    int r = unary_type_inference(parent, child); 
+
+    if(r != 0){
+        return r;
+    }
+
+    char *regChild = child->code->r;
+
+    char *op = parent->label;
+
+    char *resultReg = create_register();
+
+    char *line;
+
+    CODE_BLOCK *op_block;
+
+    if( strcmp(op, "+") == 0){
+
+        line = malloc(1*128);
+
+        sprintf(line,"addI %s, 0 => %s \n",regChild, resultReg);
+
+        op_block = create_block(line, 1);
+
+    } else if( strcmp(op, "-") == 0){
+
+        char *aux = create_register();
+
+        line = malloc(2*128);
+
+        sprintf(line,"multI %s, 2 => %s \nsub %s, %s => %s \n",regChild, aux, regChild, aux, resultReg);
+
+        free(aux);
+
+        op_block = create_block(line, 2);
+
+    } else if( strcmp(op, "?") == 0){
+
+        line = malloc(1*128);
+
+        sprintf(line,"cmp_GT %s, 0 => %s \n",regChild, resultReg);
+
+        op_block = create_block(line, 1);
+
+    }
+
+
+    parent->code = concat_iloc_code(child->code, op_block);
+
+    parent->code->r = resultReg;
+
+    return 0;
 }
 
 void print_iloc(CODE_BLOCK *iloc_code){
