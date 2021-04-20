@@ -528,13 +528,13 @@ CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *fa
     char *l3 = create_label();
 
     char *code = malloc(128);
-    sprintf(code,"cbr %s => %s, %s \n%s:\n", exp->code->r, l1, l2, l1);
+    sprintf(code,"cbr %s => %s, %s \n%s: \n", exp->code->r, l1, l2, l1);
     CODE_BLOCK* block = create_block(code, 1);
     block = concat_iloc_code(exp->code, block);
     block = concat_iloc_code(block, true_cmds->code);
 
     char *code_JI = malloc(128);
-    sprintf(code_JI,"jumpI %s", l3);
+    sprintf(code_JI,"jumpI => %s\n", l3);
     CODE_BLOCK* jumpI_block = create_block(code_JI, 1);
     block = concat_iloc_code(block, jumpI_block);
 
@@ -542,7 +542,6 @@ CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *fa
     sprintf(code_j2,"%s:\n", l2);
     CODE_BLOCK* block_2 = create_block(code_j2, 1);
     if(false_cmds != NULL) {
-        printf("cmd do else >>  %s  << \n", false_cmds->code->code);
         block_2 = concat_iloc_code(block_2, false_cmds->code);
     }
 
@@ -581,6 +580,57 @@ CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds)
     block_l2 = concat_iloc_code(block_cbr, block_l2);
 
     block_l2 = concat_iloc_code(block_l2, do_cmds->code);
+
+    char *code_ji = malloc(128);
+    sprintf(code_ji,"jumpI => %s\n", l1);
+    CODE_BLOCK* block_ji = create_block(code_ji, 1);
+    block_ji = concat_iloc_code(block_l2, block_ji);
+
+    char *code_l3 = malloc(128);
+    sprintf(code_l3,"%s: \n", l3);
+    CODE_BLOCK* block_l3 = create_block(code_l3, 1);
+    block_l3 = concat_iloc_code(block_ji, block_l3);
+
+    return block_l3;
+}
+
+CODE_BLOCK* ILOC_cmd_for(STACK *stack, node_t* initial, node_t* condition, node_t* increment, node_t* cmds)
+{
+    /*
+        <initialization>
+    L1: <condition>
+        cbr condition->r => L2, L3
+    L2:
+        <cmds>
+        <increment>
+        jumpI L1
+    L3: nope
+    */
+    char* l1 = create_label();
+    char* l2 = create_label();
+    char* l3 = create_label();
+
+    char *code_l1 = malloc(128);
+    sprintf(code_l1,"%s: \n", l1);
+    CODE_BLOCK* block_l1 = create_block(code_l1, 1);
+
+    block_l1 = concat_iloc_code(initial->code, block_l1);
+
+    block_l1 = concat_iloc_code(block_l1, condition->code);
+
+    char *code_cbr = malloc(128);
+    sprintf(code_cbr,"cbr %s => %s, %s\n", condition->code->r, l2, l3);
+    CODE_BLOCK* block_cbr = create_block(code_cbr, 1);
+    block_cbr = concat_iloc_code(block_l1, block_cbr);
+
+    char *code_l2 = malloc(128);
+    sprintf(code_l2,"%s: \n", l2);
+    CODE_BLOCK* block_l2 = create_block(code_l2, 1);
+    block_l2 = concat_iloc_code(block_cbr, block_l2);
+
+    block_l2 = concat_iloc_code(block_l2, cmds->code);
+    block_l2 = concat_iloc_code(block_l2, increment->code);
+
 
     char *code_ji = malloc(128);
     sprintf(code_ji,"jumpI => %s\n", l1);

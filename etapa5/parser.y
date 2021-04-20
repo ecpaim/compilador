@@ -436,6 +436,8 @@ cmd_iter :
         add_child($$, $6);
         add_child($$, $8);
         add_child($$, $10);
+
+        $$->code = ILOC_cmd_for(hash_stack, $4, $6, $8, $10);
 	
     }
     | TK_PR_WHILE { hash_stack = put_stack(hash_stack); } '(' exp ')' TK_PR_DO func_block {
