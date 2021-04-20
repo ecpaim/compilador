@@ -44,6 +44,9 @@ void add_to_table(HASH_TBL *hashtab[], char *name, void *content)
     new_entry->name = strdup(name); // ou só name? ponteiros diferentes evita double free
 
     CONTEUDO *c = (CONTEUDO*) content;
+    if(c != NULL){
+        c->func_label = NULL;
+    }
 
     aux_entry = hashtab[hashval];
 
@@ -71,6 +74,7 @@ void free_entry(HASH_TBL *entry)
     if (entry->content != NULL)
     {   
         free_token(entry->content->valor);
+        free(entry->content->func_label);
         
         LIST* aux;
         LIST* next = (LIST*) entry->content->argumentos;

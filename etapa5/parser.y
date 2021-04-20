@@ -21,6 +21,7 @@ int f_type;
 
 CODE_BLOCK* iloc_code;
 int has_main_function;
+char *return_label;
 
 %}
 
@@ -28,6 +29,7 @@ int has_main_function;
 {
 	hash_stack = create_stack();
     iloc_code = create_code();
+    return_label = NULL;
     has_main_function = 0;
 };
 
@@ -97,7 +99,7 @@ programa_star:
     programa { arvore = $1; pop_stack(hash_stack); 
         ILOC_add_rbss_offset(iloc_code);
         print_iloc(iloc_code); 
-        //printf("rbss: %d \nrfp: %d \n", deslocamento_rbss, deslocamento_rfp); 
+        free_iloc(iloc_code); 
         if(has_main_function == 0){
             printf("ERROR: Could not find main function. \n");
             return 100;
@@ -147,8 +149,10 @@ funcao :
 	func_header func_block { 
         add_child($1, $2); 
         $$ = $1; 
-        iloc_code = ILOC_add_func_code($1,$2, iloc_code, hash_stack);
+        iloc_code = ILOC_add_func_code($1,$2, iloc_code, hash_stack, return_label);
         if(strcmp($1->label, "main") == 0) has_main_function = 1;
+        free(return_label);
+        return_label = NULL;
         }
 ;
 func_header : 
@@ -157,6 +161,7 @@ func_header :
         $$ = cria_nodo($2->valor.s, $2);
         f_type = atoi($1->label);
         int r = ILOC_add_function(hash_stack, $2, $1, 0, $4, $$); if(r!=0) return r;
+        return_label = create_label();
          
       }
     | TK_PR_STATIC tipo TK_IDENTIFICADOR {  hash_stack = put_stack(hash_stack); } func_params 
@@ -164,6 +169,7 @@ func_header :
         $$ = cria_nodo($3->valor.s, $3);
         f_type = atoi($2->label);
         int r = ILOC_add_function(hash_stack, $3, $2, 1, $5, $$); if(r!=0) return r;
+        return_label = create_label();
         
      }
 ;
@@ -401,10 +407,8 @@ shift_op :
 ;
 cmd_simple_keyword : 
 	TK_PR_RETURN exp { $$ = cria_nodo("return", NULL); add_child($$,$2); 
-    int r = verify_function_return(hash_stack, $2, f_type);
-    if (r != 0) {
-        return r;
-    } }
+    int r = ILOC_function_return(hash_stack, $2, f_type, return_label, $$); if (r != 0) { return r; } 
+    }
 	| TK_PR_BREAK { $$ = cria_nodo("break", NULL);  }
 	| TK_PR_CONTINUE { $$ = cria_nodo("continue", NULL);  }
 ;
@@ -454,6 +458,7 @@ unary_op:
 low_precedence:
     '+' { $$ = cria_nodo("+", add_token(yylineno, CHAR_ESP, "+", OC_ID_SC)); }
     | '-' {  $$ = cria_nodo("-", add_token(yylineno, CHAR_ESP, "-", OC_ID_SC)); }
+    | TK_OC_OR { $$ = cria_nodo("||",add_token(yylineno, CHAR_ESP, "||", OC_ID_SC)); }
 ;
 high_precedence:
      '*' {  $$ = cria_nodo("*", add_token(yylineno, CHAR_ESP, "*", OC_ID_SC)); }
@@ -469,27 +474,26 @@ high_precedence:
     | TK_OC_EQ { $$ = cria_nodo("==",add_token(yylineno, CHAR_ESP, "==", OC_ID_SC)); }
     | TK_OC_NE { $$ = cria_nodo("!=",add_token(yylineno, CHAR_ESP, "!=", OC_ID_SC)); }
     | TK_OC_AND { $$ = cria_nodo("&&",add_token(yylineno, CHAR_ESP, "&&", OC_ID_SC)); }
-    | TK_OC_OR { $$ = cria_nodo("||",add_token(yylineno, CHAR_ESP, "||", OC_ID_SC)); }
 ;
 
 exp:
     '(' exp ')' { $$ = $2; }
-    | exp low_precedence exp_high { add_child($2,$1); add_child($2,$3); $$ = $2; int r = binary_type_inference($$, $1, $3); if(r != 0) return r;  }
-    | exp  low_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = binary_type_inference($$, $1, $4); if(r != 0) return r;  }
-    | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$5); int r = binary_type_inference($$, $3, $5); if(r != 0) return r;  }
-    | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$6); int r = binary_type_inference($$, $3, $6); if(r != 0) return r;  }
+    | exp low_precedence exp_high { add_child($2,$1); add_child($2,$3); $$ = $2; int r = ILOC_binary_exp($$, $1, $3); if(r != 0) return r;  }
+    | exp  low_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = ILOC_binary_exp($$, $1, $4); if(r != 0) return r;  }
+    | exp '?' exp ':' exp_unit {  $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$5); int r = ILOC_binary_exp($$, $3, $5); if(r != 0) return r;  }
+    | exp '?' exp ':' '(' exp ')' { $$ = cria_nodo("?:", add_token(yylineno, CHAR_ESP, "?:", OC_ID_SC)); add_child($$,$1); add_child($$,$3); add_child($$,$6); int r = ILOC_binary_exp($$, $3, $6); if(r != 0) return r;  }
     | exp_high { $$ = $1; }
 ;
 exp_high:
-     exp_high high_precedence exp_unit { add_child($2,$1); add_child($2,$3); $$ = $2; int r = binary_type_inference($$, $1, $3); if(r != 0) return r;  }
-    | exp_high high_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = binary_type_inference($$, $1, $4); if(r != 0) return r;  }
-    | '(' exp ')' high_precedence exp_unit { add_child($4,$2); add_child($4,$5); $$ = $4; int r = binary_type_inference($$, $2, $5); if(r != 0) return r;  }
+     exp_high high_precedence exp_unit { add_child($2,$1); add_child($2,$3); $$ = $2; int r = ILOC_binary_exp($$, $1, $3); if(r != 0) return r;  }
+    | exp_high high_precedence '(' exp ')' { add_child($2,$1); add_child($2,$4); $$ = $2; int r = ILOC_binary_exp($$, $1, $4); if(r != 0) return r;  }
+    | '(' exp ')' high_precedence exp_unit { add_child($4,$2); add_child($4,$5); $$ = $4; int r = ILOC_binary_exp($$, $2, $5); if(r != 0) return r;  }
     | exp_unit { $$ = $1; }
 ;
 exp_unit: 
     exp_value { $$ = $1; }
-    | unary_op exp_value { add_child($1,$2); $$ = $1; int r = unary_type_inference($$, $2); if(r != 0) return r; }
-    | unary_op '(' exp ')' { add_child($1,$3); $$ = $1; int r = unary_type_inference($$, $3); if(r != 0) return r; }
+    | unary_op exp_value { add_child($1,$2); $$ = $1; int r = ILOC_unary_exp($$, $2); if(r != 0) return r; }
+    | unary_op '(' exp ')' { add_child($1,$3); $$ = $1; int r = ILOC_unary_exp($$, $3); if(r != 0) return r; }
 ;
 exp_value: 
     TK_IDENTIFICADOR { $$ = ILOC_cria_nodo($1->valor.s,$1, "ident", hash_stack); int r = verify_exp_ident(hash_stack,"var", $$); if(r != 0) return r; }

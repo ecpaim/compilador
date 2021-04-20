@@ -35,9 +35,11 @@ int ILOC_add_func_arg(STACK* stack, TOKEN_INFO* identificador, node_t *type, int
 
 int ILOC_add_function(STACK *stack, TOKEN_INFO *indentificador, node_t *node, int static_func, node_t *func_params, node_t *parent);
 
-CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack);
+CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack, char *return_label);
 
 int ILOC_function_call(STACK *stack, node_t *node, node_t *args);
+
+int ILOC_function_return(STACK *stack, node_t *node, int f_type, char *return_label, node_t* parent);
 
 STACK *ILOC_put_stack(STACK *stack, char *type);
 
@@ -61,5 +63,7 @@ int ILOC_binary_exp(node_t *parent, node_t *left, node_t *right);
 int ILOC_unary_exp(node_t *parent, node_t *child);
 
 void print_iloc(CODE_BLOCK *iloc_code);
+
+void free_iloc(CODE_BLOCK *iloc_code);
 
 #endif

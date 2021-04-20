@@ -92,6 +92,7 @@ int ILOC_add_global_var(STACK *stack, char *type, node_t *nodo1, node_t *nodo2){
 
     int r = add_var(stack, type, nodo1, nodo2, NULL, NULL, &deslocamento_rbss);
 
+
     return r;
 }
 
@@ -195,7 +196,7 @@ STACK *ILOC_put_stack(STACK *stack, char *type){
 }
 
 
-CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack){
+CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack, char *return_label){
     if(strcmp(header->label, "main") == 0){
 
         
@@ -252,14 +253,14 @@ CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_c
 
         char *code = malloc(6*128);
 
-        sprintf(code, "loadAI rfp, 0 => %s \nloadAI rfp, 4 => %s \nloadAI rfp, 8 => %s \ni2i %s => rsp \ni2i %s => rfp \njump => %s \n",
-            r0, r1, r2, r1, r2, r0);
+        sprintf(code, "%s: \nloadAI rfp, 0 => %s \nloadAI rfp, 4 => %s \nloadAI rfp, 8 => %s \ni2i %s => rsp \ni2i %s => rfp \njump => %s \n",
+            return_label, r0, r1, r2, r1, r2, r0);
 
         free(r0);
         free(r1);
         free(r2);
 
-        CODE_BLOCK *return_inst = create_block(code, 6);
+        CODE_BLOCK *return_inst = create_block(code, 7);
 
         CODE_BLOCK *func_body;
 
@@ -276,6 +277,25 @@ CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_c
     }
 
 
+}
+
+int ILOC_function_return(STACK *stack, node_t *child, int f_type, char *return_label, node_t* parent){
+
+    int r = verify_function_return(stack, child, f_type);
+
+    if(r != 0){
+        return r;
+    }
+
+    char *line = malloc(2*128);
+
+    sprintf(line, "storeAI %s => rfp, 12 \njumpI => %s \n",child->code->r, return_label);
+
+    CODE_BLOCK *return_block = create_block(line, 2);
+
+    parent->code = concat_iloc_code(child->code, return_block);
+
+    return 0;
 }
 
 int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
@@ -322,10 +342,13 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
         args = args->next_cmd;
     }
 
-    char *jump_code = malloc(1*128);
-    sprintf(jump_code,"jumpI => %s \n", func_label);
+    char *jump_code = malloc(2*128);
 
-    CODE_BLOCK *jump_block = create_block(jump_code, 1);
+    char *return_value = create_register();
+
+    sprintf(jump_code,"jumpI => %s \nloadAI rsp, 12 => %s \n", func_label, return_value);
+
+    CODE_BLOCK *jump_block = create_block(jump_code, 2);
 
     return_offset += 1;
 
@@ -340,6 +363,8 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
     initial_block = concat_iloc_code(return_block, initial_block);
 
     node->code = initial_block;
+
+    node->code->r = return_value;
 
     free(return_reg);
 
@@ -472,16 +497,16 @@ CODE_BLOCK* ILOC_cmd_attrib(char *ident, STACK *stack, node_t *exp) {
     */
 
     HASH_TBL *entry = lookup_stack(stack, ident);
-    int base = 0;
+    
     char *code = malloc(128);
-
+   
     if(entry->content->is_global) 
         sprintf(code,"storeAI %s => rbss, %d \n", exp->code->r, entry->content->deslocamento);
     else
         sprintf(code,"storeAI %s => rfp, %d \n", exp->code->r, entry->content->deslocamento);
 
     CODE_BLOCK *block = create_block(code,1);
-
+    
     return concat_iloc_code( exp->code, block);
 }
 
@@ -780,4 +805,17 @@ void print_iloc(CODE_BLOCK *iloc_code){
 
     }while(iloc_code != NULL);
 
+    free(NULL);
+
+}
+
+void free_iloc(CODE_BLOCK *iloc_code){
+    while(iloc_code != NULL){
+        CODE_BLOCK *aux = iloc_code->previous;
+        free(iloc_code->code);
+        free(iloc_code->r);
+        free(iloc_code);
+
+        iloc_code = aux;
+    }
 }

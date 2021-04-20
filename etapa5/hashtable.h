@@ -29,6 +29,7 @@ typedef struct conteudo{
     int is_global;
     int deslocamento; // etapa 5
     char *func_label;
+    char *return_label;
 
 } CONTEUDO;
 
