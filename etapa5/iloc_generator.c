@@ -298,6 +298,17 @@ int ILOC_function_return(STACK *stack, node_t *child, int f_type, char *return_l
     return 0;
 }
 
+int get_number_of_lines(CODE_BLOCK *arg_block){
+    int n = 0;
+    while(arg_block != NULL){
+        //printf("%s",arg_block->code);
+        n += arg_block->number_of_lines;
+        arg_block = arg_block->previous;
+    }
+    //printf("\n");
+    return n;
+}
+
 int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
 
     int r = function_call(stack, node);
@@ -324,6 +335,8 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
 
         CODE_BLOCK *arg_block = args->code; // supondo que todos os nodos exp tenham esse valor
 
+        return_offset += get_number_of_lines(arg_block) + 1;
+
         char *arg_reg = arg_block->r;
 
         char *arg_param = malloc(1*128);
@@ -337,7 +350,6 @@ int ILOC_function_call(STACK *stack, node_t *node, node_t *args){
 
         initial_block = concat_iloc_code(initial_block, arg_block);
 
-        return_offset += arg_block->number_of_lines + 1;
 
         args = args->next_cmd;
     }
@@ -546,6 +558,10 @@ CODE_BLOCK* ILOC_cmd_if(STACK *stack, node_t *exp, node_t *true_cmds, node_t *fa
         block_l3 = concat_iloc_code(false_cmds->code, block_l3);
     }
 
+    free(l1);
+    free(l2);
+    free(l3);
+
     return concat_iloc_code(block, block_l3);
 }
 
@@ -591,6 +607,10 @@ CODE_BLOCK* ILOC_cmd_while(STACK *stack, node_t* exp, node_t* do_cmds)
     sprintf(code_l3,"%s: \n", l3);
     CODE_BLOCK* block_l3 = create_block(code_l3, 1);
     block_l3 = concat_iloc_code(block_ji, block_l3);
+
+    free(l1);
+    free(l2);
+    free(l3);
 
     return block_l3;
 }
@@ -643,6 +663,10 @@ CODE_BLOCK* ILOC_cmd_for(STACK *stack, node_t* initial, node_t* condition, node_
     CODE_BLOCK* block_l3 = create_block(code_l3, 1);
     block_l3 = concat_iloc_code(block_ji, block_l3);
 
+    free(l1);
+    free(l2);
+    free(l3);
+
     return block_l3;
 }
 
@@ -685,6 +709,10 @@ CODE_BLOCK* ILOC_cmd_ternary_op(STACK *stack, node_t* exp, node_t* cmd_true, nod
     block = concat_iloc_code(block, block_l3);
 
     block->r = r1;
+
+    free(l1);
+    free(l2);
+    free(l3);
 
     return block;
 }
