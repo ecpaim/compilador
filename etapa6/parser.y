@@ -98,9 +98,9 @@ char *return_label;
 programa_star: 
     programa { arvore = $1; pop_stack(hash_stack); 
         ILOC_add_rbss_offset(iloc_code);
-        print_iloc(iloc_code); 
-        print_iloc_to_file(iloc_code); 
-        free_iloc(iloc_code); 
+        print_iloc(iloc_code);
+        print_iloc_to_file(iloc_code);
+        free_iloc(iloc_code);
         if(has_main_function == 0){
             printf("ERROR: Could not find main function. \n");
             return 100;
@@ -161,17 +161,25 @@ func_header :
     { 
         $$ = cria_nodo($2->valor.s, $2);
         f_type = atoi($1->label);
-        int r = ILOC_add_function(hash_stack, $2, $1, 0, $4, $$); if(r!=0) return r;
         return_label = create_label();
-         
+        if(strcmp($2->valor.s, "main") == 0) {
+            has_main_function = 1;
+            free(return_label);
+            return_label = NULL;
+        }
+        int r = ILOC_add_function(hash_stack, $2, $1, 0, $4, $$); if(r!=0) return r;
       }
     | TK_PR_STATIC tipo TK_IDENTIFICADOR {  hash_stack = put_stack(hash_stack); } func_params 
     { 
         $$ = cria_nodo($3->valor.s, $3);
         f_type = atoi($2->label);
-        int r = ILOC_add_function(hash_stack, $3, $2, 1, $5, $$); if(r!=0) return r;
         return_label = create_label();
-        
+        if(strcmp($3->valor.s, "main") == 0) {
+            has_main_function = 1;
+            free(return_label);
+            return_label = NULL;
+        }
+        int r = ILOC_add_function(hash_stack, $3, $2, 1, $5, $$); if(r!=0) return r;
      }
 ;
 
@@ -536,5 +544,3 @@ int yyerror(const char *str)
     printf("error: %s in line %d\n", str, yylineno);
     return 1;
 }
-
-

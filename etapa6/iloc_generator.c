@@ -288,8 +288,10 @@ int ILOC_function_return(STACK *stack, node_t *child, int f_type, char *return_l
     }
 
     char *line = malloc(2*128);
-
-    sprintf(line, "storeAI %s => rfp, 12 \njumpI => %s \n",child->code->r, return_label);
+    if(return_label != NULL)
+        sprintf(line, "storeAI %s => rfp, 12 \njumpI => %s \n",child->code->r, return_label);
+    else
+        sprintf(line, "storeAI %s => rfp, 12 \n",child->code->r);
 
     CODE_BLOCK *return_block = create_block(line, 2);
 
