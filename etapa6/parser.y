@@ -1,5 +1,5 @@
 %{
-#include "iloc_generator.h"
+#include "assembly_generator.h"
 
 #include<stdio.h>
 #include <stdlib.h>
@@ -96,7 +96,7 @@ char *return_label;
 %start programa_star
 %%
 programa_star: 
-    programa { arvore = $1; pop_stack(hash_stack); 
+    programa { arvore = $1; 
         ILOC_add_rbss_offset(iloc_code);
         print_iloc(iloc_code);
         print_iloc_to_file(iloc_code);
@@ -105,6 +105,9 @@ programa_star:
             printf("ERROR: Could not find main function. \n");
             return 100;
         }
+        INSTRUCTION* iloc = read_iloc_code();
+        convert_to_assembly(iloc, hash_stack);
+        pop_stack(hash_stack); // pops global variables hash table
     }
 ;
 programa: 

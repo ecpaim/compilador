@@ -1,5 +1,6 @@
 #ifndef ASSEMBLY_HEADER
 #define ASSEMBLY_HEADER
+#include "iloc_generator.h"
 
 typedef struct instruction{
 	char *iloc_name;
@@ -11,7 +12,9 @@ typedef struct instruction{
 
 } INSTRUCTION;
 
-// returns pointer to last instruction
+// returns pointer to first instruction
 INSTRUCTION* read_iloc_code();
+
+void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack);
 
 #endif

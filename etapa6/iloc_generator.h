@@ -25,6 +25,8 @@ char *create_register();
 
 char *create_label();
 
+CODE_BLOCK* create_block(char *code, int n_lines);
+
 // returns pointer to the last instruction of the code
 CODE_BLOCK* concat_iloc_code(CODE_BLOCK *parent, CODE_BLOCK *new_code);
 
