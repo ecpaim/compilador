@@ -137,8 +137,9 @@ int ILOC_add_function(STACK *stack, TOKEN_INFO *indentificador, node_t *node, in
     int list_size = 0;
 
     int r = add_function_to_table(stack, indentificador, node, static_func, func_params, deslocamento_rbss, &list_size);
-
-    char *label = create_label(); // the function label
+    // se for a main o label é main
+    char *label = malloc(128);
+    sprintf(label, "L%s", indentificador->valor.s); // the function label
 
     update_args_offset(stack, indentificador->valor.s, list_size, label);
 
@@ -197,10 +198,8 @@ STACK *ILOC_put_stack(STACK *stack, char *type){
 
 
 CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_code, STACK *stack, char *return_label){
+
     if(strcmp(header->label, "main") == 0){
-
-        
-
         /* adds jumpI => Lmain to code*/
         HASH_TBL *entry = lookup_stack(stack, header->label);
 

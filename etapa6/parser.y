@@ -151,7 +151,6 @@ funcao :
         add_child($1, $2); 
         $$ = $1; 
         iloc_code = ILOC_add_func_code($1,$2, iloc_code, hash_stack, return_label);
-        if(strcmp($1->label, "main") == 0) has_main_function = 1;
         free(return_label);
         return_label = NULL;
         }
