@@ -5,13 +5,12 @@ f:
 .Lf: 
 	pushq	%rbp
 	movq	%rsp, %rbp
-	addq	$16, %rsp
-	movq	%rsp, %rsp 
-	movl	$2, %ecx 
+	addq	$-16, %rsp
+	movl	$3, %ecx 
 	movl	%ecx, %eax
-	jmp	L0 
-L0: 
-	popq	%rbp
+	jmp	.L0 
+.L0: 
+	leave
 	ret
 	.size	f, .-f
 	.globl	main 
@@ -20,12 +19,12 @@ main:
 .Lmain: 
 	pushq	%rbp
 	movq	%rsp, %rbp
-	addq	$0, %rsp
-	movq	%rsp, %rsp 
 	call	f 
 	movl	%eax, %ecx 
 	movl	%ecx, %eax
+	movq	%rbp, %rsp
 	popq	%rbp
 	ret
 	.size	main, .-main
 	.section	.note.GNU-stack,"",@progbits 
+	

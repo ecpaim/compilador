@@ -202,7 +202,17 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
         char *line = malloc(128);
 
-        if((strcmp(iloc_code->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->op1,"rsp") == 0) && (strcmp(iloc_code->op2,"12") == 0) ){ // function call return value
+        /* in AT&T assembly x64_86, the stack must move in multiples of 16*/
+        if((strcmp(iloc_code->iloc_name,"addI") == 0) && (strcmp(iloc_code->op1,"rsp") == 0) && (strcmp(iloc_code->op3,"rsp") == 0) ){
+          
+            sprintf(line,"\taddq\t$-16, %%rsp\n");
+
+            CODE_BLOCK *block = create_block(line,3);
+
+            assembly_code = concat_iloc_code(assembly_code, block);
+
+
+        } else if((strcmp(iloc_code->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->op1,"rsp") == 0) && (strcmp(iloc_code->op2,"12") == 0) ){ // function call return value
 
             HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
 
@@ -225,19 +235,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             for(int i = 0; i < 3; i++){ // not useful on assembly
                 iloc_code = iloc_code->next;
             }
-
-        } else if((strcmp(iloc_code->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->op1,"rfp") == 0) && (strcmp(iloc_code->op2,"0") == 0) ){ // function return instructions
-
-            sprintf(line,"\tpopq\t%%rbp\n\tret\n\t.size\t%s, .-%s\n",current_function,current_function);
-
-            CODE_BLOCK *block = create_block(line,3);
-
-            assembly_code = concat_iloc_code(assembly_code, block);
-
-            for(int i = 0; i < 5; i++){ // skip next 5 instructions (iloc function return)
-                iloc_code = iloc_code->next;
-            }
-          
 
         } else if((strcmp(iloc_code->iloc_name,"storeAI") == 0) && (strcmp(iloc_code->op2,"rfp") == 0) && (strcmp(iloc_code->op3,"12") == 0) ){ //return value
 
@@ -263,7 +260,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 if(entry != NULL){
                     sprintf(line,"\tcall\t%s \n",func_name);
                 } else{
-                    sprintf(line,"\tjmp\t%s \n",iloc_code->op1);
+                    sprintf(line,"\tjmp\t.%s \n",iloc_code->op1);
                 }
             }
 
@@ -301,7 +298,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             }
             if((strcmp(iloc_code->op1,"rsp") == 0) || (strcmp(iloc_code->op1,"rfp") == 0) || (strcmp(iloc_code->op1,"rbss") == 0) || 
                 (strcmp(iloc_code->op3,"rsp") == 0) || (strcmp(iloc_code->op3,"rfp") == 0) || (strcmp(iloc_code->op3,"rbss") == 0)){
-                sprintf(line,"\taddq\t$%s, %s\n\tmovq\t%s, %s \n",iloc_code->op2, op1->content->return_label, op1->content->return_label, op3->content->return_label);
+                sprintf(line,"\taddq\t$-%s, %s\n\tmovq\t%s, %s \n",iloc_code->op2, op1->content->return_label, op1->content->return_label, op3->content->return_label);
             } else { 
                 sprintf(line,"\taddl\t$%s, %s\n\tmovl\t%s, %s \n",iloc_code->op2, op1->content->return_label, op1->content->return_label, op3->content->return_label);
             }
@@ -329,25 +326,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             assembly_code = concat_iloc_code(assembly_code, block);
 
-        } else if(strcmp(iloc_code->iloc_name,"loadAI") == 0){
-
-            HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
-
-            HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
-
-            if(op3 == NULL){
-                char *reg = get_new_reg();
-                content = malloc(sizeof(CONTEUDO));
-                content->return_label = strdup(reg); 
-                add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
-                op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
-            }
-            sprintf(line,"\tmovl\t-%s(%s), %s\n", iloc_code->op2, op1->content->return_label, op3->content->return_label);
-
-            CODE_BLOCK *block = create_block(line,1);
-
-            assembly_code = concat_iloc_code(assembly_code, block);
-
         } else if(strcmp(iloc_code->iloc_name,"loadI") == 0){
             
             HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
@@ -369,13 +347,13 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
         } else if(strcmp(iloc_code->iloc_name,"halt") == 0){
 
-            sprintf(line, "\tpopq\t%%rbp\n\tret\n\t.size\tmain, .-main\n\t.section\t.note.GNU-stack,\"\",@progbits \n");
+            sprintf(line, "\tmovq\t%%rbp, %%rsp\n\tpopq\t%%rbp\n\tret\n\t.size\tmain, .-main\n\t.section\t.note.GNU-stack,\"\",@progbits \n");
 
-            CODE_BLOCK *block = create_block(line,4);
+            CODE_BLOCK *block = create_block(line,5);
 
             assembly_code = concat_iloc_code(assembly_code, block);
 
-        } else { // it is a label
+        } else if(iloc_code->op1 == NULL && iloc_code->op2 == NULL && iloc_code->op3 == NULL) { // it is a label
 
             char func_name[128];
          
@@ -389,17 +367,68 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 block = create_block(line,6);
                 current_function = strdup(func_name);
 
-                iloc_code = iloc_code->next; // skip next instruction
+                iloc_code = iloc_code->next; // skip next instruction i2i rsp => rfp
+
+                iloc_code = iloc_code->next; // processing addI rsp, 32 => rsp and args
+
+                if(strcmp(func_name,"main") != 0){
+
+                    int number_args = (atoi(iloc_code->op2) - 16)/8;
+                    printf("NUMBER ARGS: %d \n",number_args);
+
+                    for(int i = 0; i<number_args; i++){ //skip args instructions
+                        iloc_code = iloc_code->next->next;
+                    }
+                }
 
             } else {
-                sprintf(line, "%s \n",iloc_code->iloc_name);
-                block = create_block(line,1);
+                /* if it is iloc function return instructions */
+                if((strcmp(iloc_code->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->op2,"0") == 0) && (iloc_code->next->next != NULL)) {
+                    if( (strcmp(iloc_code->next->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->next->op2,"4") == 0)){
+                        
+                        sprintf(line,".%s \n\tleave\n\tret\n\t.size\t%s, .-%s\n",iloc_code->iloc_name, current_function,current_function);
+
+                        block = create_block(line,4);
+
+                        for(int i = 0; i < 6; i++){ // skip next 5 instructions (iloc function return)
+                            iloc_code = iloc_code->next;
+                        }
+
+                    } else {
+                        sprintf(line, ".%s \n",iloc_code->iloc_name);
+                        block = create_block(line,1);
+                    }
+                } else {
+                    sprintf(line, ".%s \n",iloc_code->iloc_name);
+                    block = create_block(line,1);
+                }
             }
 
             assembly_code = concat_iloc_code(assembly_code, block);
+           
+
+        } else if(strcmp(iloc_code->iloc_name,"loadAI") == 0){
+         
+            HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
+
+            HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
+
+            if(op3 == NULL){
+                char *reg = get_new_reg();
+                content = malloc(sizeof(CONTEUDO));
+                content->return_label = strdup(reg); 
+                add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
+                op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
+            }
+            sprintf(line,"\tmovl\t-%s(%s), %s\n", iloc_code->op2, op1->content->return_label, op3->content->return_label);
+
+            CODE_BLOCK *block = create_block(line,1);
+
+            assembly_code = concat_iloc_code(assembly_code, block);
+
         }
 
-        //printf("line: %s", assembly_code->code);
+        //printf("%s", assembly_code->code);
 
         iloc_code = iloc_code->next;
     }
