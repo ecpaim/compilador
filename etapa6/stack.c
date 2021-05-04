@@ -81,7 +81,7 @@ void print_stack(STACK* stack){
 				printf("item nome: %s \n", stack->hashtab[i]->name);
 				CONTEUDO *content = stack->hashtab[i]->content;
 				if( content != NULL){
-					printf("linha: %d \nnatureza: %d \ntipo: %d \ntamanho: %d \n\n",  content->linha, content->natureza, content->tipo, content->tamanho);
+					printf("linha: %d \nnatureza: %d \ntipo: %d \ntamanho: %d isglobal: %d\n\n",  content->linha, content->natureza, content->tipo, content->tamanho, content->is_global);
 				}
 			}
 				

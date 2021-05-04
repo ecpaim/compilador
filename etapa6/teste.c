@@ -1,10 +1,10 @@
+int var, var2;
+int var3;
 int f(){
-	int c;
 	return 2;
 }
-
+int var4;
 int main() {
-	int i;
-	i = 6/2;
-	return i;
+	var = 5;
+	return var;
 }

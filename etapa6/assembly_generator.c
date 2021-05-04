@@ -177,12 +177,37 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
     CODE_BLOCK* assembly_code = create_block("\t.text \n", 1); //initial assembly instruction
 
+    STACK* offset_to_global_var = create_stack();
+
+    for(int i = 0; i < HASHSIZE; i++){
+        if(stack->hashtab[i] != NULL){
+            printf("item nome: %s \n", stack->hashtab[i]->name);
+            CONTEUDO *content = stack->hashtab[i]->content;
+            if( content != NULL){
+                printf("linha: %d \nnatureza: %d \ntipo: %d \ntamanho: %d isglobal: %d desloc: %d\n\n",  content->linha, content->natureza, content->tipo, content->tamanho, content->is_global, content->deslocamento);
+                if(content->natureza == 1){
+                    char *line = malloc(128);
+                    sprintf(line,"\t.comm\t%s,4,4\n", stack->hashtab[i]->name);
+                    CODE_BLOCK *block = create_block(line,3);
+                    assembly_code = concat_iloc_code(assembly_code, block);
+
+                    CONTEUDO *cnt = malloc(sizeof(CONTEUDO));
+                    cnt->return_label = strdup(stack->hashtab[i]->name); 
+                    char desloc[20];
+                    sprintf(desloc,"%d",content->deslocamento);
+                    add_entry(offset_to_global_var,desloc, cnt);
+                }
+            }
+        }
+                
+    }
+    /*
     do{
         printf("inst: %s %s %s %s \n",aux->iloc_name, aux->op1, aux->op2, aux->op3);
         aux = aux->next;
 
     }while(aux != NULL);
-
+    */
     STACK* iloc_to_assembly_reg = create_stack();
     CONTEUDO *content = malloc(sizeof(CONTEUDO));
     content->return_label = strdup("%rsp"); 
@@ -217,6 +242,17 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             for(int i = 0; i < 3; i++){ // not useful on assembly
                 iloc_code = iloc_code->next;
             }
+
+
+        } else if((strcmp(iloc_code->iloc_name,"storeAI") == 0) && (strcmp(iloc_code->op2,"rsp") == 0)){ // function call arguments
+
+            HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
+
+            sprintf(line,"\tsubq\t$8, %%rsp \n\tmovl\t%s,(%%rsp)\n",op1->content->return_label);
+
+            CODE_BLOCK *block = create_block(line,2);
+
+            assembly_code = concat_iloc_code(assembly_code, block);
 
         } else if((strcmp(iloc_code->iloc_name,"storeAI") == 0) && (strcmp(iloc_code->op2,"rfp") == 0) && (strcmp(iloc_code->op3,"12") == 0) ){ //return value
 
@@ -313,8 +349,12 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
 
-            if((strcmp(iloc_code->op1,"rsp") == 0) || (strcmp(iloc_code->op1,"rfp") == 0) || (strcmp(iloc_code->op1,"rbss") == 0) || 
-                (strcmp(iloc_code->op3,"rsp") == 0) || (strcmp(iloc_code->op3,"rfp") == 0) || (strcmp(iloc_code->op3,"rbss") == 0)){
+            if((strcmp(iloc_code->op2,"rbss") == 0)){
+               
+                HASH_TBL *var_name = lookup_stack( offset_to_global_var, iloc_code->op3);
+                sprintf(line,"\tmovl\t%s,%s(%%rip) \n", op1->content->return_label, var_name->content->return_label);
+
+            } else if((strcmp(iloc_code->op1,"rsp") == 0) || (strcmp(iloc_code->op1,"rfp") == 0) || (strcmp(iloc_code->op3,"rsp") == 0) || (strcmp(iloc_code->op3,"rfp") == 0)){
                 sprintf(line,"\tmovq\t%s,-%s(%s)\n",op1->content->return_label, iloc_code->op3, op2->content->return_label);
             } else {
                 sprintf(line,"\tmovl\t%s,-%s(%s)\n",op1->content->return_label, iloc_code->op3, op2->content->return_label);
@@ -362,9 +402,11 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             CODE_BLOCK *block;
             if(entry != NULL){ // beginning of function
+                
+                current_function = strdup(func_name);
+
                 sprintf(line, "\t.globl\t%s \n\t.type\t%s, @function \n%s:\n.%s \n\tpushq\t%%rbp\n\tmovq\t%%rsp, %%rbp\n",func_name, func_name, func_name, iloc_code->iloc_name);
                 block = create_block(line,6);
-                current_function = strdup(func_name);
 
                 iloc_code = iloc_code->next; // skip next instruction i2i rsp => rfp
 
@@ -373,13 +415,20 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 if(strcmp(func_name,"main") != 0){
 
                     int number_args = (atoi(iloc_code->op2) - 16)/8;
-                    printf("NUMBER ARGS: %d \n",number_args);
+                    //printf("NUMBER ARGS: %d \n",number_args);
 
-                    for(int i = 0; i<number_args; i++){ //skip args instructions
-                        iloc_code = iloc_code->next->next;
-                        /*
-                        
-                        */
+                    char *var_space = malloc(128);
+                    sprintf(var_space,"\taddq\t$-%d, %%rsp\n",16*number_args);
+                    CODE_BLOCK* var_space_block = create_block(var_space,1);
+                    block = concat_iloc_code(block,var_space_block);
+
+                    for(int i = 0; i<number_args; i++){ 
+                        iloc_code = iloc_code->next;
+                        char *get_arg = malloc(128);
+                        sprintf(get_arg,"\tmovl\t%d(%%rbp), %%eax \n\tmovl\t%%eax,-%s(%%rbp)\n",i*8+16, iloc_code->next->op3);
+                        CODE_BLOCK* arg_block = create_block(get_arg,2);
+                        block = concat_iloc_code(block,arg_block);
+                        iloc_code = iloc_code->next;
                     }
                 }
 
@@ -410,7 +459,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
            
 
         } else if(strcmp(iloc_code->iloc_name,"loadAI") == 0){
-         
+
             HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
 
             HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
@@ -422,7 +471,16 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
                 op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
             }
-            sprintf(line,"\tmovl\t-%s(%s), %s\n", iloc_code->op2, op1->content->return_label, op3->content->return_label);
+
+            if(strcmp(iloc_code->op1,"rbss") == 0){
+                HASH_TBL *var_name = lookup_stack( offset_to_global_var, iloc_code->op2);
+                sprintf(line,"\tmovl\t%s(%%rip), %s\n",var_name->content->return_label, op3->content->return_label);
+
+            } else {
+
+                sprintf(line,"\tmovl\t-%s(%s), %s\n", iloc_code->op2, op1->content->return_label, op3->content->return_label);
+
+            }
 
             CODE_BLOCK *block = create_block(line,1);
 
@@ -462,7 +520,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
         }
 
 
-        printf("%s", assembly_code->code);
+        //printf("%s", assembly_code->code);
 
         iloc_code = iloc_code->next;
     }

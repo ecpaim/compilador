@@ -387,6 +387,7 @@ int verify_var_declaration(STACK *stack, TOKEN_INFO *ident, int type, node_t *va
         content->const_var = is_const;
         content->linha = ident->linha;
         content->valor = ident; // verificar se isso for um identificador se isso já tá declarado
+        content->is_global = 0;
         if (var_value != NULL && var_value->value->tipo == IDENT)
         {
             HASH_TBL *initial_ident;
