@@ -9,6 +9,8 @@ teste:
 
 clean:
 	rm -rf pilha saida grafico etapa6 lex.yy.c lex.yy.o main.o parser.tab.c parser.tab.o parser.tab.h debug token_info.o tree.o stack.o hashtable.o symbol_table.o iloc_generator.o assembly_generator.o temp
-
-
-
+teste2:
+	./etapa6 < teste.c > saida.s
+	gcc saida.s -o a
+	./a
+	@echo 'command exited with $(.SHELLSTATUS)'

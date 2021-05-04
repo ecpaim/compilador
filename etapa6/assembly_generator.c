@@ -550,10 +550,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             assembly_code = concat_iloc_code(assembly_code, block);
         }
-
-
-        //printf("%s", assembly_code->code);
-
         iloc_code = iloc_code->next;
     }
 

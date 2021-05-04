@@ -98,7 +98,7 @@ char *return_label;
 programa_star: 
     programa { arvore = $1; 
         ILOC_add_rbss_offset(iloc_code);
-        print_iloc(iloc_code);
+        // print_iloc(iloc_code);
         print_iloc_to_file(iloc_code);
         free_iloc(iloc_code);
         if(has_main_function == 0){
