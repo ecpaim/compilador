@@ -16,5 +16,5 @@ typedef struct instruction{
 INSTRUCTION* read_iloc_code();
 
 void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack);
-
+CODE_BLOCK* binary_exp(STACK *iloc_to_assembly_reg, INSTRUCTION* iloc_code, CODE_BLOCK* assembly_code, char* operation);
 #endif

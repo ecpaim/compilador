@@ -133,17 +133,17 @@ alterna circularmente entre os registradores
 */
 char *get_new_reg(){
 
-    static int next = 0;
+    static int next = 1;
 
     int aux = next;
     next++;
-    if(next = 11) next = 0;
+    if(next == 11) next = 1;
 
     switch(aux){
         case 0:
-            return "%ecx";
-        case 1:
             return "%edx";
+        case 1:
+            return "%ecx";
         case 2:
             return "%ebx";
         case 3:
@@ -212,24 +212,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             assembly_code = concat_iloc_code(assembly_code, block);
 
 
-        } else if((strcmp(iloc_code->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->op1,"rsp") == 0) && (strcmp(iloc_code->op2,"12") == 0) ){ // function call return value
-
-            HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
-
-            if(op3 == NULL){
-                char *reg = get_new_reg();
-                content = malloc(sizeof(CONTEUDO));
-                content->return_label = strdup(reg); 
-                add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
-                op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
-            }
-
-            sprintf(line,"\tmovl\t%%eax, %s \n",op3->content->return_label);
-
-            CODE_BLOCK *block = create_block(line,3);
-
-            assembly_code = concat_iloc_code(assembly_code, block);
-
         } else if((strcmp(iloc_code->iloc_name,"addI") == 0) && (strcmp(iloc_code->op1,"rpc") == 0)){ // function call instructions
 
             for(int i = 0; i < 3; i++){ // not useful on assembly
@@ -259,6 +241,23 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 HASH_TBL *entry = lookup_declaration(stack, func_name);
                 if(entry != NULL){
                     sprintf(line,"\tcall\t%s \n",func_name);
+                    
+                    // function call return value
+                    HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->next->op3);
+                    
+
+                    if(op3 == NULL){
+                        char *reg = get_new_reg();
+                        content = malloc(sizeof(CONTEUDO));
+                        content->return_label = strdup(reg); 
+                        add_entry(iloc_to_assembly_reg, iloc_code->next->op3 , content);
+                        op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->next->op3);
+                    }
+
+                    sprintf(line,"\tcall\t%s \n\tmovl\t%%eax, %s \n",func_name, op3->content->return_label);
+
+                    iloc_code = iloc_code->next; // skip next instruction
+                    
                 } else{
                     sprintf(line,"\tjmp\t.%s \n",iloc_code->op1);
                 }
@@ -378,6 +377,9 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
                     for(int i = 0; i<number_args; i++){ //skip args instructions
                         iloc_code = iloc_code->next->next;
+                        /*
+                        
+                        */
                     }
                 }
 
@@ -426,9 +428,41 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             assembly_code = concat_iloc_code(assembly_code, block);
 
+        } else if(strcmp(iloc_code->iloc_name,"mult") == 0) {
+            assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "mull");
+        } else if(strcmp(iloc_code->iloc_name,"add") == 0) {
+            assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "addl");
+        } else if(strcmp(iloc_code->iloc_name,"sub") == 0) {
+            assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "subl");
+        } else if(strcmp(iloc_code->iloc_name,"and") == 0) {
+            assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "andl");
+        } else if(strcmp(iloc_code->iloc_name,"or") == 0) {
+            assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "orl");
+        } else if(strcmp(iloc_code->iloc_name,"div") == 0) {
+            /*
+            movl op1->content->return_label, %eax
+            cltd (rax contem quadword)
+            movq $0 %rdx
+            idivq op2->content->return_label (eax tem a resposta)
+            */
+            HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
+            HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
+
+            char* line = malloc(256);
+            sprintf(line, "\tmovl\t%s, %%eax\n\tcltd\n\tmovq\t$0, %%rdx\n\tidivl\t%s\n", op1->content->return_label, op2->content->return_label);
+            // D - S
+            // subl S, D = D - S
+            CONTEUDO* content = malloc(sizeof(CONTEUDO));
+            content->return_label = strdup("%eax"); 
+            add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
+
+            CODE_BLOCK *block = create_block(line,4);
+
+            assembly_code = concat_iloc_code(assembly_code, block);
         }
 
-        //printf("%s", assembly_code->code);
+
+        printf("%s", assembly_code->code);
 
         iloc_code = iloc_code->next;
     }
@@ -438,6 +472,22 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
     free(current_function);
 }
 
+CODE_BLOCK* binary_exp(STACK *iloc_to_assembly_reg, INSTRUCTION* iloc_code, CODE_BLOCK* assembly_code, char* operation){
+    HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
+    HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
+
+    char* line = malloc(256);
+    sprintf(line, "\t%s\t%s, %s\n", operation, op2->content->return_label, op1->content->return_label);
+    // D - S
+    // subl S, D = D - S
+    CONTEUDO* content = malloc(sizeof(CONTEUDO));
+    content->return_label = strdup(op1->content->return_label); 
+    add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
+
+    CODE_BLOCK *block = create_block(line,2);
+
+    return concat_iloc_code(assembly_code, block);
+}
 /*
 
 int main(){

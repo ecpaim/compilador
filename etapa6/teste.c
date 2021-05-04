@@ -1,8 +1,10 @@
-int aa;
 int f(){
-	int a;
-	return 3;
+	int c;
+	return 2;
 }
+
 int main() {
-	return f();
+	int i;
+	i = 6/2;
+	return i;
 }
