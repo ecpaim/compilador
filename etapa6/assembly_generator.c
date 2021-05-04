@@ -552,7 +552,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
         }
 
 
-        printf("%s", assembly_code->code);
+        //printf("%s", assembly_code->code);
 
         iloc_code = iloc_code->next;
     }

@@ -229,7 +229,7 @@ CODE_BLOCK *ILOC_add_func_code(node_t *header, node_t *block, CODE_BLOCK *iloc_c
 
         /* the main function doesn't have instructions to jump to return address */
 
-        char *halt_code = strdup("halt\n");
+        char *halt_code = strdup("Lend:\nhalt\n");
 
         CODE_BLOCK *halt_block = create_block(halt_code, 1);
 
@@ -290,7 +290,7 @@ int ILOC_function_return(STACK *stack, node_t *child, int f_type, char *return_l
     if(return_label != NULL)
         sprintf(line, "storeAI %s => rfp, 12 \njumpI => %s \n",child->code->r, return_label);
     else
-        sprintf(line, "storeAI %s => rfp, 12 \n",child->code->r);
+        sprintf(line, "storeAI %s => rfp, 12 \njumpI => Lend \n",child->code->r);
 
     CODE_BLOCK *return_block = create_block(line, 2);
 
