@@ -22,13 +22,13 @@ unsigned hash(char *s)
 
 HASH_TBL *lookup(HASH_TBL *hashtab[], char *s)
 {
-    HASH_TBL *entry;
+    HASH_TBL *entry = NULL;
+    HASH_TBL* return_entry = NULL;
     unsigned hashed_value = hash(s);
     for (entry = hashtab[hashed_value]; entry != NULL; entry = entry->next)
         if (strcmp(s, entry->name) == 0)
-            return entry; /* found */
-
-    return NULL; /* not found */
+            return_entry = entry; /* found */
+    return return_entry; /* not found */
 }
 
 void add_to_table(HASH_TBL *hashtab[], char *name, void *content)
@@ -41,7 +41,7 @@ void add_to_table(HASH_TBL *hashtab[], char *name, void *content)
     new_entry = malloc(sizeof(HASH_TBL *));
     new_entry->content = content;
     new_entry->next = NULL;
-    new_entry->name = strdup(name); // ou só name? ponteiros diferentes evita double free
+    new_entry->name = strdup(name); 
 
     CONTEUDO *c = (CONTEUDO*) content;
     if(c != NULL){

@@ -63,8 +63,6 @@ INSTRUCTION* read_iloc_code(){
     char delim[] = " ,=>\n\0";
 
 	while ((read = getline(&line, &len, f)) != -1) {
-      
-        //printf("%s", line);
 
         char *tkn = strtok(line, delim);
 
@@ -181,10 +179,8 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
     for(int i = 0; i < HASHSIZE; i++){
         if(stack->hashtab[i] != NULL){
-            //printf("item nome: %s \n", stack->hashtab[i]->name);
             CONTEUDO *content = stack->hashtab[i]->content;
             if( content != NULL){
-                //printf("linha: %d \nnatureza: %d \ntipo: %d \ntamanho: %d isglobal: %d desloc: %d\n\n",  content->linha, content->natureza, content->tipo, content->tamanho, content->is_global, content->deslocamento);
                 if(content->natureza == 1){
                     char *line = malloc(128);
                     sprintf(line,"\t.comm\t%s,4,4\n", stack->hashtab[i]->name);
@@ -201,13 +197,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
         }
                 
     }
-    /*
-    do{
-        printf("inst: %s %s %s %s \n",aux->iloc_name, aux->op1, aux->op2, aux->op3);
-        aux = aux->next;
 
-    }while(aux != NULL);
-    */
     STACK* iloc_to_assembly_reg = create_stack();
     CONTEUDO *content = malloc(sizeof(CONTEUDO));
     content->return_label = strdup("%rsp"); 
@@ -247,7 +237,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
         } else if((strcmp(iloc_code->iloc_name,"cbr") == 0)){ 
 
             HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
-
             sprintf(line,"\tcmpl\t$1,%s \n\tje\t.%s \n\tjne\t.%s \n", op1->content->return_label, iloc_code->op2, iloc_code->op3);
 
             CODE_BLOCK *block = create_block(line,3);
@@ -447,7 +436,6 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
                 if(strcmp(func_name,"main") != 0){
 
                     int number_args = (atoi(iloc_code->op2) - 16)/8;
-                    //printf("NUMBER ARGS: %d \n",number_args);
 
                     char *var_space = malloc(128);
                     sprintf(var_space,"\taddq\t$-%d, %%rsp\n",16*number_args);
@@ -612,33 +600,11 @@ CODE_BLOCK* binary_exp(STACK *iloc_to_assembly_reg, INSTRUCTION* iloc_code, CODE
     sprintf(line, "\t%s\t%s, %s\n", operation, op2->content->return_label, op1->content->return_label);
     // D - S
     // subl S, D = D - S
+    // o ultimo é o destino 
     CONTEUDO* content = malloc(sizeof(CONTEUDO));
     content->return_label = strdup(op1->content->return_label); 
     add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
-
     CODE_BLOCK *block = create_block(line,2);
 
     return concat_iloc_code(assembly_code, block);
 }
-/*
-
-int main(){
-
-	INSTRUCTION *last = read_iloc_code();
-	INSTRUCTION *aux = last;
-	
-	while(aux->previous != NULL){
-        aux = aux->previous;
-    }
-
-    do{
-        printf("inst: %s %s %s %s \n",aux->iloc_name, aux->op1, aux->op2, aux->op3);
-        aux = aux->next;
-
-    }while(aux != NULL);
-
-    free_instructions(last);
-
-	return 0;
-}
-*/

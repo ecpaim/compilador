@@ -5,7 +5,7 @@ all:
 	gcc -o etapa6 main.o lex.yy.o parser.tab.o token_info.o tree.o stack.o hashtable.o symbol_table.o iloc_generator.o assembly_generator.o -lfl
 
 teste:
-	./etapa6 < teste.c > saida
+	./etapa6 < teste.c > saida.s
 
 clean:
 	rm -rf pilha saida grafico etapa6 lex.yy.c lex.yy.o main.o parser.tab.c parser.tab.o parser.tab.h debug token_info.o tree.o stack.o hashtable.o symbol_table.o iloc_generator.o assembly_generator.o temp
