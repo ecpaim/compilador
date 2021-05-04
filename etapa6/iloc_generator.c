@@ -891,19 +891,21 @@ int ILOC_unary_exp(node_t *parent, node_t *child){
 
         line = malloc(2*128);
 
-        sprintf(line,"multI %s, 2 => %s \nsub %s, %s => %s \n",regChild, aux, regChild, aux, resultReg);
+        sprintf(line,"loadI 2 => %s \nmult %s, %s => %s \nsub %s, %s => %s \n",aux, aux, regChild, aux, regChild, aux, resultReg);
 
         free(aux);
 
-        op_block = create_block(line, 2);
+        op_block = create_block(line, 3);
 
     } else if( strcmp(op, "?") == 0){
 
-        line = malloc(1*128);
+        line = malloc(2*128);
 
-        sprintf(line,"cmp_GT %s, 0 => %s \n",regChild, resultReg);
+        char *aux = create_register();
 
-        op_block = create_block(line, 1);
+        sprintf(line,"loadI 0 => %s \ncmp_GT %s, %s => %s \n",aux, regChild, aux, resultReg);
+
+        op_block = create_block(line, 2);
 
     }
 
