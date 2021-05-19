@@ -38,11 +38,16 @@ INSTRUCTION* concat_instruction(INSTRUCTION *parent, INSTRUCTION *new_code){
 
 void free_instructions(INSTRUCTION *last){
     while(last != NULL){
-        INSTRUCTION *aux = last->previous;
-        free(last->iloc_name);
-        free(last->op1);
-        free(last->op2);
-        free(last->op3);
+        INSTRUCTION *aux = last->next;
+        if(last->iloc_name != NULL)
+            free(last->iloc_name);
+        if(last->op1 != NULL)
+            free(last->op1);
+        if(last->op1 != NULL)
+            free(last->op2);
+        if(last->op1 != NULL)
+            free(last->op3);
+
         free(last);
 
         last = aux;
@@ -173,7 +178,8 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
     iloc_code = iloc_code->next->next; // first two instructions just set the value of rfp and rsp
     iloc_code = iloc_code->next->next; // next two instructions set value of rbss and jump to main
 
-    CODE_BLOCK* assembly_code = create_block("\t.text \n", 1); //initial assembly instruction
+    char *textline = strdup("\t.text \n");
+    CODE_BLOCK* assembly_code = create_block(textline, 1); //initial assembly instruction
 
     STACK* offset_to_global_var = create_stack();
 
@@ -212,6 +218,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
     add_entry(iloc_to_assembly_reg,"rbss", content); // adds rbss -> %rip translation
 
     char *current_function = NULL;
+
     
     while(iloc_code != NULL){
 
@@ -232,7 +239,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             for(int i = 0; i < 3; i++){ // not useful on assembly
                 iloc_code = iloc_code->next;
             }
-
+            free(line);
 
         } else if((strcmp(iloc_code->iloc_name,"cbr") == 0)){ 
 
@@ -266,7 +273,8 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             assembly_code = concat_iloc_code(assembly_code, block);
 
-        } else if((strcmp(iloc_code->iloc_name,"storeAI") == 0) && (strcmp(iloc_code->op2,"rfp") == 0) && (strcmp(iloc_code->op3,"12") == 0) ){ //return value
+        } else if((strcmp(iloc_code->iloc_name,"storeAI") == 0) && (strcmp(iloc_code->op2,"rfp") == 0) && (strcmp(iloc_code->op3,"12") == 0) 
+                    && (strcmp(iloc_code->next->iloc_name,"jumpI") == 0) ){ //return value
 
             HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
 
@@ -423,7 +431,7 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
             CODE_BLOCK *block;
             if(entry != NULL){ // beginning of function
-                
+                free(current_function);
                 current_function = strdup(func_name);
 
                 sprintf(line, "\t.globl\t%s \n\t.type\t%s, @function \n%s:\n.%s \n\tpushq\t%%rbp\n\tmovq\t%%rsp, %%rbp\n",func_name, func_name, func_name, iloc_code->iloc_name);
@@ -455,7 +463,9 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             } else {
                 /* if it is iloc function return instructions */
                 if((strcmp(iloc_code->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->op2,"0") == 0) && (iloc_code->next->next != NULL)) {
-                    if( (strcmp(iloc_code->next->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->next->op2,"4") == 0)){
+                    if( (strcmp(iloc_code->next->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->next->op2,"4") == 0) 
+                        && (strcmp(iloc_code->next->next->next->iloc_name,"loadAI") == 0) && (strcmp(iloc_code->next->next->next->op1,"rfp") == 0) && (strcmp(iloc_code->next->next->next->op2,"8") == 0)
+                        && (strcmp(iloc_code->next->next->next->next->iloc_name,"i2i") == 0)){
                         
                         sprintf(line,".%s \n\tleave\n\tret\n\t.size\t%s, .-%s\n",iloc_code->iloc_name, current_function,current_function);
 
@@ -508,14 +518,19 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
 
         } else if(strcmp(iloc_code->iloc_name,"mult") == 0) {
             assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "imul");
+            free(line);
         } else if(strcmp(iloc_code->iloc_name,"add") == 0) {
             assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "addl");
+            free(line);
         } else if(strcmp(iloc_code->iloc_name,"sub") == 0) {
             assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "subl");
+            free(line);
         } else if(strcmp(iloc_code->iloc_name,"and") == 0) {
             assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "andl");
+            free(line);
         } else if(strcmp(iloc_code->iloc_name,"or") == 0) {
             assembly_code = binary_exp(iloc_to_assembly_reg, iloc_code, assembly_code, "orl");
+            free(line);
         } else if(strcmp(iloc_code->iloc_name,"div") == 0) {
             /*
             movl op1->content->return_label, %eax
@@ -526,24 +541,91 @@ void convert_to_assembly(INSTRUCTION* iloc_code, STACK* stack){
             HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
             HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
 
+            HASH_TBL *op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
+
+            if(op3 == NULL){
+                char *reg = get_new_reg();
+                content = malloc(sizeof(CONTEUDO));
+                content->return_label = strdup(reg); 
+                add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
+                op3 = lookup_stack( iloc_to_assembly_reg, iloc_code->op3);
+            }
+
             char* line = malloc(256);
-            sprintf(line, "\tmovl\t%s, %%eax\n\tcltd\n\tmovq\t$0, %%rdx\n\tidivl\t%s\n", op1->content->return_label, op2->content->return_label);
+            sprintf(line, "\tmovl\t%s, %%eax\n\tcltd\n\tmovq\t$0, %%rdx\n\tidivl\t%s\n\tmovl\t%%eax,%s \n", op1->content->return_label, op2->content->return_label, op3->content->return_label);
             // D - S
             // subl S, D = D - S
-            CONTEUDO* content = malloc(sizeof(CONTEUDO));
-            content->return_label = strdup("%eax"); 
-            add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
 
             CODE_BLOCK *block = create_block(line,4);
 
             assembly_code = concat_iloc_code(assembly_code, block);
         }
+        //printf("%s", assembly_code->code);
         iloc_code = iloc_code->next;
     }
 
     print_iloc(assembly_code);
 
     free(current_function);
+
+    free_instructions(aux);
+
+    free_iloc(assembly_code);
+
+    //pop_stack(iloc_to_assembly_reg);
+    //pop_stack(offset_to_global_var);
+
+    HASH_TBL *next_aux;
+    for (int i = 0; i < HASHSIZE; i++)
+    {
+        if (iloc_to_assembly_reg->hashtab[i] != NULL)
+        {   
+            HASH_TBL *aux = iloc_to_assembly_reg->hashtab[i]->next;
+            while (aux != NULL)
+            {
+                next_aux = aux->next;
+                if(aux->content != NULL){
+                    free(aux->content->return_label);
+                    free(aux->content);
+                    free(aux->name);
+                    free(aux);
+                }
+                aux = next_aux;
+            }
+            
+            free(iloc_to_assembly_reg->hashtab[i]->content->return_label);
+            free(iloc_to_assembly_reg->hashtab[i]->content);
+            free(iloc_to_assembly_reg->hashtab[i]->name);
+            free(iloc_to_assembly_reg->hashtab[i]);
+        }
+    }
+
+    for (int i = 0; i < HASHSIZE; i++)
+    {
+        if (offset_to_global_var->hashtab[i] != NULL)
+        {   
+            HASH_TBL *aux = offset_to_global_var->hashtab[i]->next;
+            while (aux != NULL)
+            {
+                next_aux = aux->next;
+                if(aux->content != NULL){
+                    free(aux->content->return_label);
+                    free(aux->content);
+                    free(aux->name);
+                    free(aux);
+                }
+                aux = next_aux;
+            }
+            
+            free(offset_to_global_var->hashtab[i]->content->return_label);
+            free(offset_to_global_var->hashtab[i]->content);
+            free(offset_to_global_var->hashtab[i]->name);
+            free(offset_to_global_var->hashtab[i]);
+        }
+    }
+    free(iloc_to_assembly_reg);
+    free(offset_to_global_var);
+
 }
 
 CODE_BLOCK* cmp_instructions(STACK* iloc_to_assembly_reg, CODE_BLOCK* assembly_code, INSTRUCTION* iloc_code, char *line){
@@ -593,9 +675,11 @@ CODE_BLOCK* cmp_instructions(STACK* iloc_to_assembly_reg, CODE_BLOCK* assembly_c
 }
 
 CODE_BLOCK* binary_exp(STACK *iloc_to_assembly_reg, INSTRUCTION* iloc_code, CODE_BLOCK* assembly_code, char* operation){
+   
+   
     HASH_TBL *op1 = lookup_stack( iloc_to_assembly_reg, iloc_code->op1);
     HASH_TBL *op2 = lookup_stack( iloc_to_assembly_reg, iloc_code->op2);
-
+   
     char* line = malloc(256);
     sprintf(line, "\t%s\t%s, %s\n", operation, op2->content->return_label, op1->content->return_label);
     // D - S
@@ -605,6 +689,6 @@ CODE_BLOCK* binary_exp(STACK *iloc_to_assembly_reg, INSTRUCTION* iloc_code, CODE
     content->return_label = strdup(op1->content->return_label); 
     add_entry(iloc_to_assembly_reg, iloc_code->op3 , content);
     CODE_BLOCK *block = create_block(line,2);
-
+    
     return concat_iloc_code(assembly_code, block);
 }

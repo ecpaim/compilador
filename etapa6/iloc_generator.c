@@ -955,10 +955,14 @@ void print_iloc_to_file(CODE_BLOCK *iloc_code){
 void free_iloc(CODE_BLOCK *iloc_code){
     while(iloc_code != NULL){
         CODE_BLOCK *aux = iloc_code->previous;
-        free(iloc_code->code);
-        free(iloc_code->r);
+   
+        if(iloc_code->code != NULL)
+            free(iloc_code->code);
+        if(iloc_code->r!= NULL)
+            free(iloc_code->r);
         free(iloc_code);
 
         iloc_code = aux;
+
     }
 }

@@ -18,3 +18,7 @@
   - [ ] for
 
 - [x] Chamada de função (com jumpI para um label)
+
+13/05
+- [ ] o operador && não tem menos precedência que os operadores aritmeticos (isso é necessário?
+- [ ] algumas funções recursivas retornam o valor errado pois os valores dos registradores mudam entre chamadas de funções. Solução: salvar o estado de todos os registradores e carregar da memória quando voltar da função.

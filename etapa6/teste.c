@@ -1,26 +1,30 @@
-int main() {
-	int a;
-	a = 0;
-	int i;
-	for(i=0: i < 6: i=i+1){
-		a = a + 1;
-		if(a == 1 && a == 10) {
-			return 2;
-		}
-	}
-	int j;
-	j=0;
-	while(j > 10) do {
-		return j;
-	}
-	for(i=0:i != 0:i=i+1){
-		return 20;
-	}
-	if(1 == 2 && 3 == 4){
-		return 20;
-	}
-	if(1 == 5 || 1 == 1) {
-		return 11;
-	}
-	return 2;
+int f(int z, int w)
+{
+  return z*w;
+}
+
+int mult (int z, int w, int a, int b)
+{
+  int x;
+  int y;
+  int A;
+  int B;
+  A = f(z,w);
+  B = f(a,b);
+  x = A + B;
+  y = x + 1;
+  return y;
+}
+
+int main()
+{
+  int x;
+  int K;
+  int y;
+  int z;
+  x = 2018;
+  y = 2;
+  z = 2;
+  K = mult(y*3, y*3, z*2, z*2);
+  return K;
 }
